@@ -1,0 +1,1293 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GymFlow</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+  :root {
+    --bg: #0d0d0f;
+    --surface: #16161a;
+    --surface2: #1e1e24;
+    --border: #2a2a35;
+    --accent: #e8ff47;
+    --accent2: #ff6b35;
+    --text: #f0f0f0;
+    --muted: #6b6b7e;
+    --pause-color: #4fc3f7;
+    --green: #69f0ae;
+    --red: #ff5252;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* SCREENS */
+  .screen { display: none; min-height: 100vh; flex-direction: column; }
+  .screen.active { display: flex; }
+
+  /* ====== HOME ====== */
+  #home {
+    padding: 32px 24px 24px;
+    gap: 0;
+  }
+
+  .logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 48px;
+    letter-spacing: 4px;
+    color: var(--accent);
+    line-height: 1;
+  }
+  .logo span { color: var(--muted); font-size: 14px; letter-spacing: 2px; font-family: 'DM Sans', sans-serif; display: block; margin-top: 4px; font-weight: 300; }
+
+  .section-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 13px;
+    letter-spacing: 3px;
+    color: var(--muted);
+    margin: 32px 0 12px;
+  }
+
+  .exercise-list { display: flex; flex-direction: column; gap: 8px; flex: 1; }
+
+  .exercise-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    cursor: pointer;
+    transition: border-color 0.2s, transform 0.1s;
+  }
+  .exercise-card:active { transform: scale(0.98); }
+  .exercise-card:hover { border-color: var(--accent); }
+
+  .ex-icon {
+    width: 44px; height: 44px;
+    border-radius: 12px;
+    background: var(--surface2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+    flex-shrink: 0;
+  }
+
+  .ex-info { flex: 1; }
+  .ex-name { font-weight: 600; font-size: 15px; }
+  .ex-meta { font-size: 12px; color: var(--muted); margin-top: 3px; }
+
+  .confirm-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    background: rgba(255,82,82,0.12);
+    border-top: 1px solid rgba(255,82,82,0.3);
+    border-radius: 0 0 14px 14px;
+    font-size: 13px;
+    color: var(--red);
+  }
+  .confirm-bar span { flex: 1; font-weight: 600; }
+  .confirm-yes {
+    padding: 6px 14px;
+    border-radius: 8px;
+    border: none;
+    background: var(--red);
+    color: #fff;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .confirm-no {
+    padding: 6px 14px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    cursor: pointer;
+  }
+
+  .del-btn {
+    width: 34px; height: 34px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    font-size: 16px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    transition: background 0.15s;
+  }
+  .del-btn:active { background: rgba(255,82,82,0.2); }
+
+  .ex-badge {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    text-transform: uppercase;
+  }
+  .badge-timer { background: rgba(232,255,71,0.15); color: var(--accent); }
+  .badge-reps { background: rgba(255,107,53,0.15); color: var(--accent2); }
+
+  .fab {
+    position: fixed;
+    bottom: 28px; right: 24px;
+    width: 56px; height: 56px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: none;
+    cursor: pointer;
+    font-size: 28px;
+    color: var(--bg);
+    box-shadow: 0 4px 24px rgba(232,255,71,0.4);
+    display: flex; align-items: center; justify-content: center;
+    transition: transform 0.2s, box-shadow 0.2s;
+    z-index: 100;
+  }
+  .fab:active { transform: scale(0.92); }
+
+  /* ====== CREATE / EDIT ====== */
+  #create {
+    padding: 0;
+  }
+
+  .page-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 32px 24px 20px;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .back-btn {
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-size: 18px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .page-title { font-family: 'Bebas Neue', sans-serif; font-size: 26px; letter-spacing: 2px; }
+
+  .form-body { padding: 24px; flex: 1; overflow-y: auto; padding-bottom: 120px; }
+
+  .field { margin-bottom: 20px; }
+  .field label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .input {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 16px;
+    color: var(--text);
+    font-size: 15px;
+    font-family: 'DM Sans', sans-serif;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .input:focus { border-color: var(--accent); }
+  .input::placeholder { color: var(--muted); }
+
+  .type-toggle {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .type-btn {
+    padding: 14px;
+    border-radius: 12px;
+    border: 2px solid var(--border);
+    background: var(--surface);
+    color: var(--muted);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+  }
+  .type-btn.active-timer {
+    border-color: var(--accent);
+    background: rgba(232,255,71,0.08);
+    color: var(--accent);
+  }
+  .type-btn.active-reps {
+    border-color: var(--accent2);
+    background: rgba(255,107,53,0.08);
+    color: var(--accent2);
+  }
+
+  .sets-config {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+  }
+
+  .set-row {
+    display: flex;
+    align-items: center;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+    gap: 12px;
+  }
+  .set-row:last-child { border-bottom: none; }
+
+  .set-label { flex: 1; font-size: 14px; font-weight: 500; }
+  .set-sublabel { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+  .stepper {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .step-btn {
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--text);
+    font-size: 18px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s;
+    flex-shrink: 0;
+  }
+  .step-btn:active { background: var(--border); }
+  .step-val { font-family: 'Bebas Neue', sans-serif; font-size: 22px; min-width: 36px; text-align: center; color: var(--accent); }
+
+  .toggle-row {
+    display: flex;
+    align-items: center;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+    gap: 12px;
+  }
+  .toggle-row:last-child { border-bottom: none; }
+
+  .toggle {
+    width: 44px; height: 24px;
+    border-radius: 12px;
+    background: var(--border);
+    position: relative;
+    cursor: pointer;
+    transition: background 0.2s;
+    flex-shrink: 0;
+  }
+  .toggle.on { background: var(--accent); }
+  .toggle::after {
+    content: '';
+    position: absolute;
+    top: 3px; left: 3px;
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: #fff;
+    transition: transform 0.2s;
+  }
+  .toggle.on::after { transform: translateX(20px); }
+
+  .save-btn {
+    position: fixed;
+    bottom: 28px;
+    left: 24px; right: 24px;
+    padding: 18px;
+    background: var(--accent);
+    border: none;
+    border-radius: 16px;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 20px;
+    letter-spacing: 2px;
+    color: var(--bg);
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.1s;
+    z-index: 100;
+  }
+  .save-btn:active { transform: scale(0.98); }
+
+  /* ====== WORKOUT ====== */
+  #workout {
+    padding: 0;
+    background: var(--bg);
+  }
+
+  .workout-header {
+    display: flex;
+    align-items: center;
+    padding: 32px 24px 16px;
+    gap: 12px;
+  }
+
+  .workout-name { font-family: 'Bebas Neue', sans-serif; font-size: 28px; letter-spacing: 2px; flex: 1; }
+
+  .series-progress {
+    display: flex;
+    gap: 6px;
+    padding: 0 24px 20px;
+    flex-wrap: wrap;
+  }
+  .series-dot {
+    height: 6px;
+    border-radius: 3px;
+    background: var(--border);
+    flex: 1;
+    transition: background 0.3s;
+    min-width: 20px;
+  }
+  .series-dot.done { background: var(--green); }
+  .series-dot.active { background: var(--accent); }
+
+  /* TIMER MODE */
+  .timer-display {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px 24px 28px;
+    flex: 1;
+  }
+
+  .phase-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 12px;
+  }
+  .phase-label.work { color: var(--accent); }
+  .phase-label.pause { color: var(--pause-color); }
+
+  .clock-ring {
+    position: relative;
+    width: 220px; height: 220px;
+    margin: 0 auto 24px;
+  }
+
+  .clock-ring svg {
+    position: absolute; top: 0; left: 0;
+    transform: rotate(-90deg);
+  }
+
+  .clock-ring .ring-bg {
+    fill: none;
+    stroke: var(--surface2);
+    stroke-width: 8;
+  }
+  .clock-ring .ring-progress {
+    fill: none;
+    stroke: var(--accent);
+    stroke-width: 8;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 0.1s linear, stroke 0.3s;
+  }
+  .ring-progress.pause-ring { stroke: var(--pause-color); }
+
+  .clock-time {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 72px;
+    letter-spacing: 2px;
+    line-height: 1;
+    color: var(--text);
+  }
+
+  .current-serie {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 16px;
+    letter-spacing: 2px;
+    color: var(--muted);
+    margin-bottom: 28px;
+  }
+
+  .timer-controls {
+    display: flex;
+    gap: 12px;
+    padding: 0 24px;
+    margin-bottom: 20px;
+  }
+
+  .ctrl-btn {
+    flex: 1;
+    padding: 16px;
+    border-radius: 14px;
+    border: none;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 18px;
+    letter-spacing: 1.5px;
+    cursor: pointer;
+    transition: transform 0.1s, opacity 0.2s;
+  }
+  .ctrl-btn:active { transform: scale(0.96); }
+
+  .btn-play {
+    background: var(--accent);
+    color: var(--bg);
+    font-size: 22px;
+  }
+  .btn-skip {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--muted);
+  }
+  .btn-reset {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--muted);
+  }
+
+  /* REPS MODE */
+  .reps-display {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px 24px;
+    flex: 1;
+  }
+
+  .reps-info {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 14px;
+    letter-spacing: 2px;
+    color: var(--muted);
+    margin-bottom: 28px;
+  }
+
+  .reps-big {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 96px;
+    line-height: 1;
+    color: var(--accent);
+    margin-bottom: 8px;
+  }
+
+  .reps-label {
+    font-size: 13px;
+    color: var(--muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 40px;
+  }
+
+  .prev-serie-btn {
+    width: 100%;
+    padding: 14px;
+    border-radius: 14px;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    margin-top: 8px;
+  }
+
+  .validate-btn {
+    width: 100%;
+    padding: 22px;
+    border-radius: 18px;
+    background: var(--accent);
+    border: none;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 24px;
+    letter-spacing: 3px;
+    color: var(--bg);
+    cursor: pointer;
+    transition: transform 0.1s, opacity 0.2s;
+    margin-bottom: 12px;
+  }
+  .validate-btn:active { transform: scale(0.97); }
+  .validate-btn:disabled { opacity: 0.4; pointer-events: none; }
+
+  /* Pause overlay */
+  .pause-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(13,13,15,0.96);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+  }
+  .pause-overlay.visible { opacity: 1; pointer-events: all; }
+
+  .pause-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 16px;
+    letter-spacing: 4px;
+    color: var(--pause-color);
+    margin-bottom: 20px;
+  }
+
+  .pause-clock {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 100px;
+    color: var(--pause-color);
+    line-height: 1;
+    margin-bottom: 8px;
+  }
+
+  .pause-sub {
+    font-size: 12px;
+    color: var(--muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 48px;
+  }
+
+  .skip-pause-btn {
+    padding: 14px 36px;
+    border-radius: 12px;
+    border: 1px solid var(--pause-color);
+    background: transparent;
+    color: var(--pause-color);
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 16px;
+    letter-spacing: 2px;
+    cursor: pointer;
+  }
+
+  /* Done screen */
+  .done-screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    padding: 32px;
+    text-align: center;
+  }
+
+  .done-emoji { font-size: 72px; margin-bottom: 24px; }
+  .done-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 48px;
+    letter-spacing: 3px;
+    color: var(--accent);
+    margin-bottom: 12px;
+  }
+  .done-sub { font-size: 15px; color: var(--muted); margin-bottom: 48px; }
+
+  .done-btn {
+    width: 100%;
+    padding: 18px;
+    border-radius: 16px;
+    background: var(--accent);
+    border: none;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 20px;
+    letter-spacing: 2px;
+    color: var(--bg);
+    cursor: pointer;
+    margin-bottom: 12px;
+  }
+  .done-btn-outline {
+    width: 100%;
+    padding: 18px;
+    border-radius: 16px;
+    background: transparent;
+    border: 1px solid var(--border);
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 20px;
+    letter-spacing: 2px;
+    color: var(--muted);
+    cursor: pointer;
+  }
+
+  .empty-state {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: var(--muted);
+    gap: 8px;
+  }
+  .empty-state .emoji { font-size: 48px; }
+  .empty-state p { font-size: 14px; }
+
+  select.input { appearance: none; }
+
+
+
+  .pause-ring-wrap {
+    position: relative;
+    width: 180px; height: 180px;
+    margin-bottom: 12px;
+  }
+  .pause-ring-wrap svg { position: absolute; top:0; left:0; transform: rotate(-90deg); }
+  .pause-ring-time {
+    position: absolute;
+    top:50%; left:50%;
+    transform: translate(-50%,-50%);
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 64px;
+    color: var(--pause-color);
+    line-height: 1;
+  }
+</style>
+</head>
+<body>
+
+<!-- HOME -->
+<div id="home" class="screen active">
+  <div class="logo">GYMFLOW <span>TRACKER</span></div>
+  <div class="section-title">MES EXERCICES</div>
+  <div class="exercise-list" id="exercise-list">
+    <div class="empty-state" id="empty-state">
+      <div class="emoji">🏋️</div>
+      <p>Aucun exercice enregistré</p>
+      <p>Appuie sur + pour en créer un</p>
+    </div>
+  </div>
+  <button class="fab" onclick="openCreate()">+</button>
+</div>
+
+<!-- CREATE -->
+<div id="create" class="screen">
+  <div class="page-header">
+    <button class="back-btn" onclick="goHome()">←</button>
+    <div class="page-title" id="create-title">NOUVEL EXERCICE</div>
+  </div>
+  <div class="form-body">
+    <div class="field">
+      <label>Nom de l'exercice</label>
+      <input class="input" type="text" id="ex-name" placeholder="Ex: Gainage, Squat, Curl…">
+    </div>
+    <div class="field">
+      <label>Type</label>
+      <div class="type-toggle">
+        <button class="type-btn active-timer" id="btn-timer" onclick="setType('timer')">⏱ Avec Timer</button>
+        <button class="type-btn" id="btn-reps" onclick="setType('reps')">🔁 Répétitions</button>
+      </div>
+    </div>
+    <div class="field">
+      <label>Configuration des séries</label>
+      <div class="sets-config" id="sets-config">
+        <!-- dynamically filled -->
+      </div>
+    </div>
+    <div class="field">
+      <label>Pause entre séries</label>
+      <div class="sets-config">
+        <div class="toggle-row">
+          <div class="set-label">
+            Activer la pause
+            <div class="set-sublabel">Un décompte entre chaque série</div>
+          </div>
+          <div class="toggle" id="pause-toggle" onclick="togglePause()"></div>
+        </div>
+        <div class="set-row" id="pause-duration-row" style="display:none">
+          <div class="set-label">Durée de la pause</div>
+          <div class="stepper">
+            <button class="step-btn" onclick="stepPause(-5)">−</button>
+            <div class="step-val" id="pause-val">30s</div>
+            <button class="step-btn" onclick="stepPause(5)">+</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <button class="save-btn" onclick="saveExercise()">ENREGISTRER</button>
+</div>
+
+<!-- WORKOUT -->
+<div id="workout" class="screen">
+  <div class="workout-header">
+    <button class="back-btn" onclick="goHome()">←</button>
+    <div class="workout-name" id="workout-name"></div>
+  </div>
+  <div class="series-progress" id="series-progress"></div>
+  <div id="workout-body"></div>
+
+  <!-- Pause overlay -->
+  <div class="pause-overlay" id="pause-overlay">
+    <div class="pause-title">PAUSE</div>
+    <div class="pause-ring-wrap">
+      <svg width="180" height="180" viewBox="0 0 180 180">
+        <circle class="ring-bg" cx="90" cy="90" r="80" style="fill:none;stroke:var(--surface2);stroke-width:8"/>
+        <circle id="pause-ring-path" cx="90" cy="90" r="80" style="fill:none;stroke:var(--pause-color);stroke-width:8;stroke-linecap:round"/>
+      </svg>
+      <div class="pause-ring-time" id="pause-ring-time">30</div>
+    </div>
+    <div class="pause-sub">Prépare-toi</div>
+    <button class="skip-pause-btn" onclick="skipPause()">PASSER →</button>
+  </div>
+</div>
+
+<script>
+// ======= STATE =======
+let exercises = JSON.parse(localStorage.getItem('gymflow_exercises') || '[]');
+let editingIdx = null;
+
+// Form state — stored in a plain object to avoid window[] lookup issues with let
+const form = {
+  type: 'timer',
+  sets: 5,
+  workSecs: 60,
+  reps: 10,
+  repsEnabled: false,
+  pauseEnabled: false,
+  pauseSecs: 30,
+};
+
+// ======= HOME =======
+function renderHome() {
+  const list = document.getElementById('exercise-list');
+  list.innerHTML = '';
+  if (!exercises.length) {
+    list.innerHTML = `
+      <div class="empty-state">
+        <div class="emoji">🏋️</div>
+        <p>Aucun exercice enregistré</p>
+        <p>Appuie sur + pour en créer un</p>
+      </div>`;
+    return;
+  }
+  exercises.forEach((ex, i) => {
+    const card = document.createElement('div');
+    card.className = 'exercise-card';
+    card.innerHTML = `
+      <div class="ex-info">
+        <div class="ex-name">${ex.name}</div>
+        <div class="ex-meta">${exMeta(ex)}</div>
+      </div>
+      <span class="ex-badge ${ex.type === 'timer' ? 'badge-timer' : 'badge-reps'}">${ex.type === 'timer' ? 'Timer' : 'Reps'}</span>
+      <button class="del-btn" data-i="${i}">🗑</button>
+    `;
+    const delBtn = card.querySelector('.del-btn');
+
+    delBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      deleteExercise(i);
+    });
+
+    // long press sur la carte (pas sur le bouton delete) → modifier
+    let pressTimer;
+    let didLongPress = false;
+
+    card.addEventListener('touchstart', (e) => {
+      if (e.target.closest('.del-btn')) return;
+      didLongPress = false;
+      pressTimer = setTimeout(() => { didLongPress = true; openEdit(i); }, 600);
+    });
+    card.addEventListener('touchend', () => clearTimeout(pressTimer));
+    card.addEventListener('touchmove', () => clearTimeout(pressTimer));
+
+    card.addEventListener('mousedown', (e) => {
+      if (e.target.closest('.del-btn')) return;
+      didLongPress = false;
+      pressTimer = setTimeout(() => { didLongPress = true; openEdit(i); }, 600);
+    });
+    card.addEventListener('mouseup', () => clearTimeout(pressTimer));
+
+    card.addEventListener('click', (e) => {
+      if (e.target.closest('.del-btn')) return;
+      if (didLongPress) { didLongPress = false; return; }
+      startWorkout(i);
+    });
+    list.appendChild(card);
+  });
+}
+
+function deleteExercise(i) {
+  // Confirmation inline pour éviter le bug confirm() sur Safari/iPhone
+  const list = document.getElementById('exercise-list');
+  const cards = list.querySelectorAll('.exercise-card');
+  const card = cards[i];
+  if (!card) return;
+
+  // Évite double-confirm
+  if (card.querySelector('.confirm-bar')) return;
+
+  const bar = document.createElement('div');
+  bar.className = 'confirm-bar';
+  bar.innerHTML = `
+    <span>Supprimer ?</span>
+    <button class="confirm-yes" onclick="confirmDelete(${i})">Oui</button>
+    <button class="confirm-no" onclick="cancelDelete(${i})">Non</button>
+  `;
+  card.appendChild(bar);
+}
+
+function confirmDelete(i) {
+  exercises.splice(i, 1);
+  localStorage.setItem('gymflow_exercises', JSON.stringify(exercises));
+  wEx = null;
+  renderHome();
+}
+
+function cancelDelete(i) {
+  const list = document.getElementById('exercise-list');
+  const cards = list.querySelectorAll('.exercise-card');
+  const card = cards[i];
+  if (card) { const bar = card.querySelector('.confirm-bar'); if (bar) bar.remove(); }
+}
+
+function exMeta(ex) {
+  if (ex.type === 'timer') {
+    const w = fmtTime(ex.workSecs);
+    const p = ex.pauseEnabled ? ` · Pause ${fmtTime(ex.pauseSecs)}` : '';
+    return `${ex.sets} séries · ${w} travail${p}`;
+  } else {
+    const repsStr = ex.repsEnabled ? ` × ${ex.reps} reps` : '';
+    const p = ex.pauseEnabled ? ` · Pause ${fmtTime(ex.pauseSecs)}` : '';
+    return `${ex.sets} séries${repsStr}${p}`;
+  }
+}
+
+function fmtTime(s) {
+  if (s < 60) return `${s}s`;
+  const m = Math.floor(s/60), r = s%60;
+  return r ? `${m}m${r}s` : `${m}min`;
+}
+
+// ======= CREATE =======
+function openCreate() {
+  editingIdx = null;
+  form.type = 'timer';
+  form.sets = 5;
+  form.workSecs = 60;
+  form.reps = 10;
+  form.repsEnabled = false;
+  form.pauseEnabled = false;
+  form.pauseSecs = 30;
+  document.getElementById('ex-name').value = '';
+  document.getElementById('create-title').textContent = 'NOUVEL EXERCICE';
+  renderTypeForm();
+  showScreen('create');
+}
+
+function openEdit(i) {
+  editingIdx = i;
+  const ex = exercises[i];
+  form.type = ex.type;
+  form.sets = ex.sets;
+  form.workSecs = ex.workSecs || 60;
+  form.reps = ex.reps || 10;
+  form.repsEnabled = ex.repsEnabled || false;
+  form.pauseEnabled = ex.pauseEnabled;
+  form.pauseSecs = ex.pauseSecs || 30;
+  document.getElementById('ex-name').value = ex.name;
+  document.getElementById('create-title').textContent = 'MODIFIER';
+  renderTypeForm();
+  showScreen('create');
+}
+
+function setType(t) {
+  form.type = t;
+  document.getElementById('btn-timer').className = 'type-btn' + (t==='timer'?' active-timer':'');
+  document.getElementById('btn-reps').className = 'type-btn' + (t==='reps'?' active-reps':'');
+  renderTypeForm();
+}
+
+function renderTypeForm() {
+  const config = document.getElementById('sets-config');
+  if (form.type === 'timer') {
+    config.innerHTML = `
+      <div class="set-row">
+        <div class="set-label">Nombre de séries<div class="set-sublabel">Répétitions de l'intervalle</div></div>
+        <div class="stepper">
+          <button class="step-btn" onclick="stepSets(-1)">−</button>
+          <div class="step-val" id="v-sets">${form.sets}</div>
+          <button class="step-btn" onclick="stepSets(1)">+</button>
+        </div>
+      </div>
+      <div class="set-row">
+        <div class="set-label">Durée de travail<div class="set-sublabel">Par série</div></div>
+        <div class="stepper">
+          <button class="step-btn" onclick="stepWork(-5)">−</button>
+          <div class="step-val" id="v-work">${fmtTime(form.workSecs)}</div>
+          <button class="step-btn" onclick="stepWork(5)">+</button>
+        </div>
+      </div>
+    `;
+  } else {
+    config.innerHTML = `
+      <div class="set-row">
+        <div class="set-label">Nombre de séries</div>
+        <div class="stepper">
+          <button class="step-btn" onclick="stepSets(-1)">−</button>
+          <div class="step-val" id="v-sets">${form.sets}</div>
+          <button class="step-btn" onclick="stepSets(1)">+</button>
+        </div>
+      </div>
+      <div class="toggle-row">
+        <div class="set-label">
+          Répétitions par série
+          <div class="set-sublabel">Afficher le nombre de reps</div>
+        </div>
+        <div class="toggle ${form.repsEnabled ? 'on' : ''}" id="reps-toggle" onclick="toggleReps()"></div>
+      </div>
+      <div class="set-row" id="reps-stepper-row" style="display:${form.repsEnabled ? 'flex' : 'none'}">
+        <div class="set-label">Nombre de répétitions</div>
+        <div class="stepper">
+          <button class="step-btn" onclick="stepReps(-1)">−</button>
+          <div class="step-val" id="v-reps">${form.reps}</div>
+          <button class="step-btn" onclick="stepReps(1)">+</button>
+        </div>
+      </div>
+    `;
+  }
+  // pause toggle
+  document.getElementById('pause-toggle').className = 'toggle' + (form.pauseEnabled ? ' on' : '');
+  document.getElementById('pause-duration-row').style.display = form.pauseEnabled ? 'flex' : 'none';
+  document.getElementById('pause-val').textContent = fmtTime(form.pauseSecs);
+}
+
+function stepSets(delta) {
+  form.sets = Math.max(1, form.sets + delta);
+  const el = document.getElementById('v-sets');
+  if (el) el.textContent = form.sets;
+}
+
+function stepReps(delta) {
+  form.reps = Math.max(1, form.reps + delta);
+  const el = document.getElementById('v-reps');
+  if (el) el.textContent = form.reps;
+}
+
+function stepWork(delta) {
+  form.workSecs = Math.max(5, form.workSecs + delta);
+  const el = document.getElementById('v-work');
+  if (el) el.textContent = fmtTime(form.workSecs);
+}
+
+function toggleReps() {
+  form.repsEnabled = !form.repsEnabled;
+  document.getElementById('reps-toggle').className = 'toggle' + (form.repsEnabled ? ' on' : '');
+  document.getElementById('reps-stepper-row').style.display = form.repsEnabled ? 'flex' : 'none';
+}
+
+function togglePause() {
+  form.pauseEnabled = !form.pauseEnabled;
+  document.getElementById('pause-toggle').className = 'toggle' + (form.pauseEnabled ? ' on' : '');
+  document.getElementById('pause-duration-row').style.display = form.pauseEnabled ? 'flex' : 'none';
+}
+
+function stepPause(delta) {
+  form.pauseSecs = Math.max(5, form.pauseSecs + delta);
+  document.getElementById('pause-val').textContent = fmtTime(form.pauseSecs);
+}
+
+function saveExercise() {
+  const name = document.getElementById('ex-name').value.trim();
+  if (!name) { alert('Donne un nom à ton exercice !'); return; }
+  const ex = {
+    name, type: form.type,
+    sets: form.sets, workSecs: form.workSecs,
+    reps: form.reps, repsEnabled: form.repsEnabled,
+    pauseEnabled: form.pauseEnabled, pauseSecs: form.pauseSecs
+  };
+  if (editingIdx !== null) exercises[editingIdx] = ex;
+  else exercises.push(ex);
+  localStorage.setItem('gymflow_exercises', JSON.stringify(exercises));
+  renderHome();
+  goHome();
+}
+
+// ======= WORKOUT =======
+let wEx = null;
+let wCurrent = 0; // current serie index (0-based)
+let wDone = false;
+
+// Timer mode state
+let timerInterval = null;
+let timerSecs = 0;
+let timerRunning = false;
+let timerPhase = 'work'; // 'work' | 'pause'
+
+// Pause overlay state
+let pauseInterval = null;
+let pauseRemaining = 0;
+
+function restartWorkout() {
+  const i = exercises.indexOf(wEx);
+  if (i === -1) { goHome(); return; }
+  startWorkout(i);
+}
+
+function startWorkout(i) {
+  if (i < 0 || i >= exercises.length) { goHome(); return; }
+  wEx = exercises[i];
+  wCurrent = 0;
+  wDone = false;
+  clearTimers();
+  document.getElementById('workout-name').textContent = wEx.name;
+  renderSeriesProgress();
+  renderWorkoutBody();
+  showScreen('workout');
+}
+
+function renderSeriesProgress() {
+  const el = document.getElementById('series-progress');
+  el.innerHTML = '';
+  for (let i = 0; i < wEx.sets; i++) {
+    const d = document.createElement('div');
+    d.className = 'series-dot' + (i < wCurrent ? ' done' : i === wCurrent ? ' active' : '');
+    el.appendChild(d);
+  }
+}
+
+function renderWorkoutBody() {
+  const body = document.getElementById('workout-body');
+  if (wDone) {
+    body.innerHTML = `
+      <div class="done-screen">
+        <div class="done-emoji">🏆</div>
+        <div class="done-title">TERMINÉ !</div>
+        <div class="done-sub">${wEx.sets} séries de ${wEx.name} complétées. Bravo !</div>
+        <button class="done-btn" onclick="restartWorkout()">🔁 Recommencer</button>
+        <button class="done-btn-outline" onclick="goHome()">← Retour</button>
+      </div>`;
+    return;
+  }
+
+  if (wEx.type === 'timer') renderTimerMode(body);
+  else renderRepsMode(body);
+}
+
+// ---- TIMER MODE ----
+function renderTimerMode(body) {
+  const circ = Math.PI * 2 * 96;
+  body.innerHTML = `
+    <div class="timer-display">
+      <div class="phase-label work" id="phase-label">TRAVAIL · SÉRIE ${wCurrent+1}/${wEx.sets}</div>
+      <div class="clock-ring">
+        <svg width="220" height="220" viewBox="0 0 220 220">
+          <circle class="ring-bg" cx="110" cy="110" r="96"/>
+          <circle class="ring-progress" id="ring-path" cx="110" cy="110" r="96"
+            style="stroke-dasharray:${circ};stroke-dashoffset:0"/>
+        </svg>
+        <div class="clock-time" id="clock-time">${fmtClock(wEx.workSecs)}</div>
+      </div>
+    </div>
+    <div class="timer-controls">
+      <button class="ctrl-btn btn-reset" onclick="resetTimer()">↺</button>
+      <button class="ctrl-btn btn-play" id="play-btn" onclick="toggleTimer()">▶</button>
+      <button class="ctrl-btn btn-skip" onclick="skipTimer()">⏭</button>
+    </div>
+  `;
+  timerSecs = wEx.workSecs;
+  timerRunning = false;
+  timerPhase = 'work';
+  updateTimerUI();
+}
+
+function fmtClock(s) {
+  const m = Math.floor(s/60), r = s%60;
+  return `${String(m).padStart(2,'0')}:${String(r).padStart(2,'0')}`;
+}
+
+function toggleTimer() {
+  if (timerRunning) pauseTimerOnly();
+  else startTimer();
+}
+
+function startTimer() {
+  timerRunning = true;
+  document.getElementById('play-btn').textContent = '⏸';
+  timerInterval = setInterval(() => {
+    timerSecs--;
+    updateTimerUI();
+    if (timerSecs <= 0) timerPhaseEnd();
+  }, 1000);
+}
+
+function pauseTimerOnly() {
+  timerRunning = false;
+  clearInterval(timerInterval);
+  document.getElementById('play-btn').textContent = '▶';
+}
+
+function resetTimer() {
+  clearInterval(timerInterval);
+  timerRunning = false;
+  timerSecs = wEx.workSecs;
+  timerPhase = 'work';
+  document.getElementById('play-btn').textContent = '▶';
+  document.getElementById('phase-label').textContent = `TRAVAIL · SÉRIE ${wCurrent+1}/${wEx.sets}`;
+  document.getElementById('phase-label').className = 'phase-label work';
+  updateTimerUI();
+}
+
+function skipTimer() {
+  clearInterval(timerInterval);
+  timerRunning = false;
+  timerPhaseEnd();
+}
+
+function timerPhaseEnd() {
+  clearInterval(timerInterval);
+  timerRunning = false;
+  // Serie complete → go to next or show pause
+  wCurrent++;
+  if (wCurrent >= wEx.sets) {
+    wDone = true;
+    renderSeriesProgress();
+    renderWorkoutBody();
+    return;
+  }
+  renderSeriesProgress();
+  if (wEx.pauseEnabled) {
+    showPauseOverlay(() => {
+      renderTimerMode(document.getElementById('workout-body'));
+    });
+  } else {
+    renderTimerMode(document.getElementById('workout-body'));
+  }
+}
+
+function updateTimerUI() {
+  const ct = document.getElementById('clock-time');
+  const rp = document.getElementById('ring-path');
+  if (!ct || !rp) return;
+  ct.textContent = fmtClock(timerSecs);
+  const total = wEx.workSecs;
+  const circ = Math.PI * 2 * 96;
+  const offset = circ * (1 - timerSecs / total);
+  rp.style.strokeDashoffset = offset;
+}
+
+// ---- REPS MODE ----
+function renderRepsMode(body) {
+  const repsBlock = wEx.repsEnabled
+    ? `<div class="reps-big">${wEx.reps}</div><div class="reps-label">répétitions</div>`
+    : `<div class="reps-label" style="margin-bottom:0;font-size:16px;color:var(--text)">Effectue ta série</div>`;
+  const prevBtn = wCurrent > 0
+    ? `<button class="prev-serie-btn" onclick="prevSerie()">← Série précédente</button>`
+    : '';
+  body.innerHTML = `
+    <div class="reps-display">
+      <div class="reps-info">SÉRIE ${wCurrent+1} / ${wEx.sets}</div>
+      ${repsBlock}
+      <div style="flex:1"></div>
+      <button class="validate-btn" id="validate-btn" onclick="validateSerie()">✓ SÉRIE VALIDÉE</button>
+      ${prevBtn}
+    </div>
+  `;
+}
+
+function prevSerie() {
+  if (wCurrent <= 0) return;
+  clearInterval(pauseInterval);
+  document.getElementById('pause-overlay').classList.remove('visible');
+  wCurrent--;
+  renderSeriesProgress();
+  renderRepsMode(document.getElementById('workout-body'));
+}
+
+function validateSerie() {
+  wCurrent++;
+  if (wCurrent >= wEx.sets) {
+    wDone = true;
+    renderSeriesProgress();
+    renderWorkoutBody();
+    return;
+  }
+  renderSeriesProgress();
+  if (wEx.pauseEnabled) {
+    showPauseOverlay(() => renderRepsMode(document.getElementById('workout-body')));
+  } else {
+    renderRepsMode(document.getElementById('workout-body'));
+  }
+}
+
+// ---- PAUSE OVERLAY ----
+function showPauseOverlay(onDone) {
+  pauseRemaining = wEx.pauseSecs;
+  const overlay = document.getElementById('pause-overlay');
+  overlay.classList.add('visible');
+  updatePauseOverlay();
+
+  pauseInterval = setInterval(() => {
+    pauseRemaining--;
+    updatePauseOverlay();
+    if (pauseRemaining <= 0) endPauseOverlay(onDone);
+  }, 1000);
+
+  overlay._onDone = onDone;
+}
+
+function updatePauseOverlay() {
+  const timeEl = document.getElementById('pause-ring-time');
+  const ring = document.getElementById('pause-ring-path');
+  if (!timeEl) return;
+  timeEl.textContent = pauseRemaining;
+  const circ = Math.PI * 2 * 80;
+  const total = wEx.pauseSecs;
+  const offset = circ * (1 - pauseRemaining / total);
+  ring.style.strokeDasharray = circ;
+  ring.style.strokeDashoffset = offset;
+}
+
+function skipPause() {
+  const overlay = document.getElementById('pause-overlay');
+  endPauseOverlay(overlay._onDone);
+}
+
+function endPauseOverlay(onDone) {
+  clearInterval(pauseInterval);
+  const overlay = document.getElementById('pause-overlay');
+  overlay.classList.remove('visible');
+  if (onDone) onDone();
+}
+
+// ======= NAV =======
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function goHome() {
+  clearTimers();
+  renderHome();
+  showScreen('home');
+}
+
+function clearTimers() {
+  clearInterval(timerInterval);
+  clearInterval(pauseInterval);
+  timerRunning = false;
+}
+
+// Init
+renderHome();
+</script>
+</body>
+</html>
