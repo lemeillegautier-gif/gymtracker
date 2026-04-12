@@ -37,6 +37,18 @@
   .confirm-bar span { flex: 1; font-weight: 600; }
   .confirm-yes { padding: 6px 14px; border-radius: 8px; border: none; background: var(--red); color: #fff; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; }
   .confirm-no { padding: 6px 14px; border-radius: 8px; border: 1px solid var(--border); background: transparent; color: var(--muted); font-family: 'DM Sans', sans-serif; font-size: 13px; cursor: pointer; }
+  /* CONTEXT MENU */
+  .ctx-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 300; display: flex; align-items: flex-end; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+  .ctx-overlay.visible { opacity: 1; pointer-events: all; }
+  .ctx-menu { background: var(--surface); border: 1px solid var(--border); border-radius: 20px 20px 0 0; width: 100%; max-width: 480px; padding: 12px 16px 36px; display: flex; flex-direction: column; gap: 8px; transform: translateY(20px); transition: transform 0.2s; }
+  .ctx-overlay.visible .ctx-menu { transform: translateY(0); }
+  .ctx-title { font-family: 'Bebas Neue', sans-serif; font-size: 13px; letter-spacing: 2px; color: var(--muted); text-align: center; padding: 8px 0 12px; border-bottom: 1px solid var(--border); margin-bottom: 4px; }
+  .ctx-btn { display: flex; align-items: center; gap: 14px; padding: 16px; border-radius: 14px; border: none; background: var(--surface2); color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 500; cursor: pointer; width: 100%; text-align: left; transition: background 0.15s; }
+  .ctx-btn:active { background: var(--border); }
+  .ctx-btn-icon { font-size: 20px; width: 32px; text-align: center; }
+  .ctx-btn.danger { color: var(--red); }
+  .ctx-cancel { display: flex; align-items: center; justify-content: center; padding: 16px; border-radius: 14px; border: 1px solid var(--border); background: transparent; color: var(--muted); font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 600; cursor: pointer; width: 100%; margin-top: 4px; }
+ 
   .fab { position: fixed; bottom: 28px; right: 24px; width: 56px; height: 56px; border-radius: 50%; background: var(--accent); border: none; cursor: pointer; font-size: 28px; color: var(--bg); box-shadow: 0 4px 24px rgba(232,255,71,0.4); display: flex; align-items: center; justify-content: center; z-index: 100; }
   .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--muted); gap: 8px; padding: 60px 0; }
   .empty-state .emoji { font-size: 48px; }
@@ -260,6 +272,17 @@
   <div class="history-list" id="history-list"></div>
 </div>
  
+<!-- CONTEXT MENU -->
+<div class="ctx-overlay" id="ctx-overlay" onclick="closeCtxMenu()">
+  <div class="ctx-menu" onclick="event.stopPropagation()">
+    <div class="ctx-title" id="ctx-title">OPTIONS</div>
+    <button class="ctx-btn" id="ctx-edit"><span class="ctx-btn-icon">✏️</span> Modifier</button>
+    <button class="ctx-btn" id="ctx-duplicate"><span class="ctx-btn-icon">📋</span> Dupliquer</button>
+    <button class="ctx-btn danger" id="ctx-delete"><span class="ctx-btn-icon">🗑</span> Supprimer</button>
+    <button class="ctx-cancel" onclick="closeCtxMenu()">Annuler</button>
+  </div>
+</div>
+ 
 <script>
 // ===== DATA =====
 let exercises = JSON.parse(localStorage.getItem('gymflow_exercises') || '[]');
@@ -286,16 +309,14 @@ function renderHome() {
           ${last ? `<div class="ex-last">Dernière séance : ${last}</div>` : ''}
         </div>
         <span class="ex-badge ${ex.type==='timer'?'badge-timer':'badge-reps'}">${ex.type==='timer'?'Timer':'Reps'}</span>
-        <button class="del-btn">🗑</button>
       </div>`;
-    card.querySelector('.del-btn').addEventListener('click', e => { e.stopPropagation(); showDeleteConfirm(i, card); });
     let pt, dlp = false;
-    card.addEventListener('touchstart', e => { if(e.target.closest('.del-btn,.confirm-bar')) return; dlp=false; pt=setTimeout(()=>{dlp=true;openEdit(i);},600); });
+    card.addEventListener('touchstart', e => { dlp=false; pt=setTimeout(()=>{dlp=true;openCtxMenu(i);},500); });
     card.addEventListener('touchend', ()=>clearTimeout(pt));
     card.addEventListener('touchmove', ()=>clearTimeout(pt));
-    card.addEventListener('mousedown', e => { if(e.target.closest('.del-btn,.confirm-bar')) return; dlp=false; pt=setTimeout(()=>{dlp=true;openEdit(i);},600); });
+    card.addEventListener('mousedown', e => { dlp=false; pt=setTimeout(()=>{dlp=true;openCtxMenu(i);},500); });
     card.addEventListener('mouseup', ()=>clearTimeout(pt));
-    card.addEventListener('click', e => { if(e.target.closest('.del-btn,.confirm-bar')) return; if(dlp){dlp=false;return;} startWorkout(i); });
+    card.addEventListener('click', e => { if(dlp){dlp=false;return;} startWorkout(i); });
     list.appendChild(card);
   });
 }
@@ -308,11 +329,40 @@ function lastHistoryStr(exIdx) {
   return d + (last.weight ? ` · ${last.weight} kg` : '');
 }
  
-function showDeleteConfirm(i, card) {
-  if (card.querySelector('.confirm-bar')) return;
+let ctxIdx = -1;
+ 
+function openCtxMenu(i) {
+  ctxIdx = i;
+  const ex = exercises[i];
+  document.getElementById('ctx-title').textContent = ex.name.toUpperCase();
+  document.getElementById('ctx-edit').onclick = () => { closeCtxMenu(); openEdit(i); };
+  document.getElementById('ctx-duplicate').onclick = () => { closeCtxMenu(); duplicateExercise(i); };
+  document.getElementById('ctx-delete').onclick = () => { closeCtxMenu(); confirmDeleteCtx(i); };
+  document.getElementById('ctx-overlay').classList.add('visible');
+}
+ 
+function closeCtxMenu() {
+  document.getElementById('ctx-overlay').classList.remove('visible');
+  ctxIdx = -1;
+}
+ 
+function duplicateExercise(i) {
+  const copy = JSON.parse(JSON.stringify(exercises[i]));
+  copy.name = copy.name + ' (copie)';
+  exercises.splice(i+1, 0, copy);
+  localStorage.setItem('gymflow_exercises', JSON.stringify(exercises));
+  renderHome();
+}
+ 
+function confirmDeleteCtx(i) {
+  const ex = exercises[i];
+  // Inline confirm on the card
+  const list = document.getElementById('exercise-list');
+  const card = list.querySelectorAll('.exercise-card')[i];
+  if (!card || card.querySelector('.confirm-bar')) return;
   const bar = document.createElement('div');
   bar.className = 'confirm-bar';
-  bar.innerHTML = `<span>Supprimer ?</span><button class="confirm-yes">Oui</button><button class="confirm-no">Non</button>`;
+  bar.innerHTML = `<span>Supprimer "${ex.name}" ?</span><button class="confirm-yes">Oui</button><button class="confirm-no">Non</button>`;
   bar.querySelector('.confirm-yes').onclick = () => { exercises.splice(i,1); localStorage.setItem('gymflow_exercises',JSON.stringify(exercises)); wEx=null; renderHome(); };
   bar.querySelector('.confirm-no').onclick = () => bar.remove();
   card.appendChild(bar);
