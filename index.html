@@ -147,7 +147,8 @@
   .series-progress { display: flex; gap: 6px; padding: 0 24px 16px; flex-wrap: wrap; }
   .series-dot { height: 6px; border-radius: 3px; background: var(--border); flex: 1; transition: background 0.3s; min-width: 20px; }
   .series-dot.done { background: var(--green); }
-  .series-dot.active { background: var(--accent); }
+  .series-dot.active { background: transparent; border: 2px dashed var(--accent); animation: dash-pulse 1s ease-in-out infinite; }
+  @keyframes dash-pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
  
   /* TIMER */
   .timer-display { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 10px 24px 20px; flex: 1; }
@@ -177,12 +178,12 @@
   /* PAUSE OVERLAY */
   .pause-overlay { position: fixed; inset: 0; background: rgba(13,13,15,0.96); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 200; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
   .pause-overlay.visible { opacity: 1; pointer-events: all; }
-  .pause-title { font-family: 'Bebas Neue', sans-serif; font-size: 16px; letter-spacing: 4px; color: var(--pause-color); margin-bottom: 20px; }
+  .pause-title { font-family: 'Bebas Neue', sans-serif; font-size: 16px; letter-spacing: 4px; color: var(--accent); margin-bottom: 20px; }
   .pause-sub { font-size: 12px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 48px; }
-  .skip-pause-btn { padding: 14px 36px; border-radius: 12px; border: 1px solid var(--pause-color); background: transparent; color: var(--pause-color); font-family: 'Bebas Neue', sans-serif; font-size: 16px; letter-spacing: 2px; cursor: pointer; }
-  .pause-ring-wrap { position: relative; width: 180px; height: 180px; margin-bottom: 12px; }
+  .skip-pause-btn { padding: 14px 36px; border-radius: 12px; border: 1px solid var(--accent); background: transparent; color: var(--accent); font-family: 'Bebas Neue', sans-serif; font-size: 16px; letter-spacing: 2px; cursor: pointer; }
+  .pause-ring-wrap { position: relative; width: 260px; height: 260px; margin-bottom: 12px; }
   .pause-ring-wrap svg { position: absolute; top:0; left:0; transform: rotate(-90deg); }
-  .pause-ring-time { position: absolute; top:50%; left:50%; transform: translate(-50%,-50%); font-family: 'Bebas Neue', sans-serif; font-size: 64px; color: var(--pause-color); line-height: 1; }
+  .pause-ring-time { position: absolute; top:50%; left:50%; transform: translate(-50%,-50%); font-family: 'Bebas Neue', sans-serif; font-size: 110px; color: var(--accent); line-height: 1; }
  
   /* DONE */
   .done-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; padding: 32px; text-align: center; }
@@ -309,9 +310,9 @@
   <div class="pause-overlay" id="pause-overlay">
     <div class="pause-title">PAUSE</div>
     <div class="pause-ring-wrap">
-      <svg width="180" height="180" viewBox="0 0 180 180">
-        <circle cx="90" cy="90" r="80" style="fill:none;stroke:var(--surface2);stroke-width:8"/>
-        <circle id="pause-ring-path" cx="90" cy="90" r="80" style="fill:none;stroke:var(--pause-color);stroke-width:8;stroke-linecap:round"/>
+      <svg width="260" height="260" viewBox="0 0 260 260">
+        <circle cx="130" cy="130" r="118" style="fill:none;stroke:var(--surface2);stroke-width:8"/>
+        <circle id="pause-ring-path" cx="130" cy="130" r="118" style="fill:none;stroke:var(--accent);stroke-width:8;stroke-linecap:round"/>
       </svg>
       <div class="pause-ring-time" id="pause-ring-time">30</div>
     </div>
@@ -807,7 +808,7 @@ function updatePauseOverlay() {
   const te=document.getElementById('pause-ring-time'),rg=document.getElementById('pause-ring-path');
   if(!te)return;
   te.textContent=pauseRemaining;
-  const circ=Math.PI*2*80;
+  const circ=Math.PI*2*118;
   rg.style.strokeDasharray=circ;
   rg.style.strokeDashoffset=circ*(1-pauseRemaining/wEx.pauseSecs);
 }
