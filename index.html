@@ -37,7 +37,58 @@
   .confirm-bar span { flex: 1; font-weight: 600; }
   .confirm-yes { padding: 6px 14px; border-radius: 8px; border: none; background: var(--red); color: #fff; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; }
   .confirm-no { padding: 6px 14px; border-radius: 8px; border: 1px solid var(--border); background: transparent; color: var(--muted); font-family: 'DM Sans', sans-serif; font-size: 13px; cursor: pointer; }
-  /* CONTEXT MENU */
+  /* DRUM ROLLER */
+  .drum-wrap { display: flex; align-items: center; gap: 4px; }
+  .drum {
+    width: 52px; height: 120px;
+    overflow: hidden;
+    position: relative;
+    border-radius: 12px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    cursor: ns-resize;
+    user-select: none;
+  }
+  .drum::before, .drum::after {
+    content: '';
+    position: absolute;
+    left: 0; right: 0;
+    height: 36px;
+    z-index: 2;
+    pointer-events: none;
+  }
+  .drum::before { top: 0; background: linear-gradient(to bottom, var(--surface2), transparent); }
+  .drum::after { bottom: 0; background: linear-gradient(to top, var(--surface2), transparent); }
+  .drum-highlight {
+    position: absolute;
+    top: 50%; left: 4px; right: 4px;
+    height: 36px;
+    transform: translateY(-50%);
+    border-radius: 8px;
+    background: rgba(232,255,71,0.12);
+    border: 1px solid rgba(232,255,71,0.3);
+    pointer-events: none;
+    z-index: 1;
+  }
+  .drum-inner {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    transition: transform 0.15s ease;
+  }
+  .drum-item {
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    color: var(--muted);
+    transition: color 0.15s;
+  }
+  .drum-item.selected { color: var(--accent); }
+  .drum-sep { font-family: 'Bebas Neue', sans-serif; font-size: 28px; color: var(--muted); padding: 0 2px; }
+  .drum-unit { font-family: 'Bebas Neue', sans-serif; font-size: 18px; color: var(--muted); margin-left: 6px; }
+ 
   .ctx-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 300; display: flex; align-items: flex-end; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
   .ctx-overlay.visible { opacity: 1; pointer-events: all; }
   .ctx-menu { background: var(--surface); border: 1px solid var(--border); border-radius: 20px 20px 0 0; width: 100%; max-width: 480px; padding: 12px 16px 36px; display: flex; flex-direction: column; gap: 8px; transform: translateY(20px); transition: transform 0.2s; }
@@ -115,11 +166,12 @@
   .auto-badge { margin: 0 24px 8px; padding: 8px 14px; background: rgba(232,255,71,0.08); border: 1px solid rgba(232,255,71,0.2); border-radius: 10px; font-size: 12px; color: var(--accent); letter-spacing: 1px; text-align: center; }
  
   /* REPS */
-  .reps-display { display: flex; flex-direction: column; align-items: center; padding: 20px 24px; flex: 1; }
+  .reps-display { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px 24px; flex: 1; gap: 16px; }
   .reps-info { font-family: 'Bebas Neue', sans-serif; font-size: 14px; letter-spacing: 2px; color: var(--muted); margin-bottom: 28px; }
   .reps-big { font-family: 'Bebas Neue', sans-serif; font-size: 96px; line-height: 1; color: var(--accent); margin-bottom: 8px; }
   .reps-label { font-size: 13px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 40px; }
-  .validate-btn { width: 100%; padding: 22px; border-radius: 18px; background: var(--accent); border: none; font-family: 'Bebas Neue', sans-serif; font-size: 24px; letter-spacing: 3px; color: var(--bg); cursor: pointer; margin-bottom: 12px; }
+  .validate-btn { width: 260px; height: 260px; border-radius: 50%; background: var(--accent); border: none; font-family: 'Bebas Neue', sans-serif; font-size: 24px; letter-spacing: 2px; color: var(--bg); cursor: pointer; margin: auto; box-shadow: 0 0 60px rgba(232,255,71,0.35); transition: transform 0.1s, box-shadow 0.1s; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 6px; }
+  .validate-btn:active { transform: scale(0.93); box-shadow: 0 0 24px rgba(232,255,71,0.15); }
   .prev-serie-btn { width: 100%; padding: 14px; border-radius: 14px; background: transparent; border: 1px solid var(--border); color: var(--muted); font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; }
  
   /* PAUSE OVERLAY */
@@ -217,10 +269,15 @@
         </div>
         <div class="set-row" id="weight-row" style="display:none">
           <div class="set-label">Poids (kg)</div>
-          <div class="stepper">
-            <button class="step-btn" onclick="stepWeight(-1)">−</button>
-            <div class="step-val" id="weight-val">10</div>
-            <button class="step-btn" onclick="stepWeight(1)">+</button>
+          <div class="drum-wrap">
+            <div class="drum" id="drum-tens">
+              <div class="drum-inner" id="drum-tens-inner"></div>
+            </div>
+            <div class="drum-sep">.</div>
+            <div class="drum" id="drum-units">
+              <div class="drum-inner" id="drum-units-inner"></div>
+            </div>
+            <div class="drum-unit">kg</div>
           </div>
         </div>
       </div>
@@ -440,8 +497,9 @@ function renderTypeForm() {
   document.getElementById('pause-duration-row').style.display=form.pauseEnabled?'flex':'none';
   document.getElementById('pause-val').textContent=fmtTime(form.pauseSecs);
   document.getElementById('weight-toggle').className='toggle'+(form.weightEnabled?' on':'');
-  document.getElementById('weight-row').style.display=form.weightEnabled?'flex':'none';
-  document.getElementById('weight-val').textContent=form.weight;
+  const wr=document.getElementById('weight-row');
+  wr.style.display=form.weightEnabled?'flex':'none';
+  if(form.weightEnabled) setTimeout(initDrums, 0);
   updateTimeSummary();
 }
  
@@ -449,11 +507,140 @@ function stepSets(d){form.sets=Math.max(1,form.sets+d);const e=document.getEleme
 function stepReps(d){form.reps=Math.max(1,form.reps+d);const e=document.getElementById('v-reps');if(e)e.textContent=form.reps;}
 function stepWork(d){form.workSecs=Math.max(5,form.workSecs+d);const e=document.getElementById('v-work');if(e)e.textContent=fmtTime(form.workSecs);updateTimeSummary();}
 function stepPause(d){form.pauseSecs=Math.max(5,form.pauseSecs+d);const e=document.getElementById('pause-val');if(e)e.textContent=fmtTime(form.pauseSecs);updateTimeSummary();}
-function stepWeight(d){form.weight=Math.max(1,form.weight+d);const e=document.getElementById('weight-val');if(e)e.textContent=form.weight;}
+function stepWeight(d){form.weight=Math.max(0,Math.min(99,form.weight+d));syncDrums();}
+ 
+// DRUM ROLLER
+let drumTens = 1, drumUnits = 0; // default 10kg
+ 
+function initDrums() {
+  drumTens = Math.floor(form.weight / 10) % 10;
+  drumUnits = form.weight % 10;
+  buildDrum('drum-tens-inner', drumTens, v => { drumTens=v; form.weight=drumTens*10+drumUnits; });
+  buildDrum('drum-units-inner', drumUnits, v => { drumUnits=v; form.weight=drumTens*10+drumUnits; });
+}
+ 
+function syncDrums() {
+  drumTens = Math.floor(form.weight / 10) % 10;
+  drumUnits = form.weight % 10;
+  scrollDrum('drum-tens-inner', drumTens);
+  scrollDrum('drum-units-inner', drumUnits);
+}
+ 
+function buildDrum(innerId, selected, onChange) {
+  const inner = document.getElementById(innerId);
+  const drum = inner.parentElement;
+  if (!inner) return;
+ 
+  // Add highlight bar
+  if (!drum.querySelector('.drum-highlight')) {
+    const hl = document.createElement('div');
+    hl.className = 'drum-highlight';
+    drum.appendChild(hl);
+  }
+ 
+  // Items: 0-9 repeated 3 times for infinite feel, centered on middle set
+  inner.innerHTML = '';
+  for (let rep = 0; rep < 3; rep++) {
+    for (let n = 0; n <= 9; n++) {
+      const item = document.createElement('div');
+      item.className = 'drum-item' + (rep === 1 && n === selected ? ' selected' : '');
+      item.textContent = n;
+      inner.appendChild(item);
+    }
+  }
+ 
+  // Position: center the drum on selected item in middle repetition
+  const itemH = 40;
+  const drumH = 120;
+  const centerOffset = (drumH / 2) - (itemH / 2);
+  let currentVal = selected;
+  inner.style.transform = `translateY(${-(10 + currentVal) * itemH + centerOffset}px)`;
+ 
+  // Touch/mouse drag
+  let startY, startOffset, isDragging = false;
+ 
+  const getOffset = () => {
+    const match = inner.style.transform.match(/translateY\((.+)px\)/);
+    return match ? parseFloat(match[1]) : 0;
+  };
+ 
+  const clamp = (offset) => {
+    const min = -(29 * itemH) + centerOffset;
+    const max = -0 * itemH + centerOffset;
+    return Math.max(min, Math.min(max, offset));
+  };
+ 
+  const snap = (offset) => {
+    const rawVal = -(offset - centerOffset) / itemH;
+    let val = Math.round(rawVal) % 10;
+    if (val < 0) val += 10;
+    currentVal = val;
+    const snappedOffset = -(10 + val) * itemH + centerOffset;
+    inner.style.transition = 'transform 0.2s ease';
+    inner.style.transform = `translateY(${snappedOffset}px)`;
+    // Update highlight
+    inner.querySelectorAll('.drum-item').forEach((el, idx) => {
+      el.classList.toggle('selected', idx % 10 === val);
+    });
+    onChange(val);
+  };
+ 
+  drum.addEventListener('touchstart', e => {
+    isDragging = true;
+    startY = e.touches[0].clientY;
+    startOffset = getOffset();
+    inner.style.transition = 'none';
+    e.preventDefault();
+  }, { passive: false });
+ 
+  drum.addEventListener('touchmove', e => {
+    if (!isDragging) return;
+    const dy = e.touches[0].clientY - startY;
+    inner.style.transform = `translateY(${clamp(startOffset + dy)}px)`;
+    e.preventDefault();
+  }, { passive: false });
+ 
+  drum.addEventListener('touchend', e => {
+    if (!isDragging) return;
+    isDragging = false;
+    snap(getOffset());
+  });
+ 
+  drum.addEventListener('mousedown', e => {
+    isDragging = true;
+    startY = e.clientY;
+    startOffset = getOffset();
+    inner.style.transition = 'none';
+  });
+ 
+  window.addEventListener('mousemove', e => {
+    if (!isDragging) return;
+    const dy = e.clientY - startY;
+    inner.style.transform = `translateY(${clamp(startOffset + dy)}px)`;
+  });
+ 
+  window.addEventListener('mouseup', e => {
+    if (!isDragging) return;
+    isDragging = false;
+    snap(getOffset());
+  });
+}
+ 
+function scrollDrum(innerId, val) {
+  const inner = document.getElementById(innerId);
+  if (!inner) return;
+  const itemH = 40, drumH = 120;
+  const centerOffset = (drumH / 2) - (itemH / 2);
+  inner.style.transition = 'transform 0.2s ease';
+  inner.style.transform = `translateY(${-(10 + val) * itemH + centerOffset}px)`;
+  inner.querySelectorAll('.drum-item').forEach((el, idx) => {
+    el.classList.toggle('selected', idx % 10 === val);
+  });
+}
 function toggleReps(){form.repsEnabled=!form.repsEnabled;document.getElementById('reps-toggle').className='toggle'+(form.repsEnabled?' on':'');document.getElementById('reps-stepper-row').style.display=form.repsEnabled?'flex':'none';}
 function togglePause(){form.pauseEnabled=!form.pauseEnabled;document.getElementById('pause-toggle').className='toggle'+(form.pauseEnabled?' on':'');document.getElementById('pause-duration-row').style.display=form.pauseEnabled?'flex':'none';updateTimeSummary();}
 function toggleAuto(){form.autoMode=!form.autoMode;document.getElementById('auto-toggle').className='toggle'+(form.autoMode?' on':'');}
-function toggleWeight(){form.weightEnabled=!form.weightEnabled;document.getElementById('weight-toggle').className='toggle'+(form.weightEnabled?' on':'');document.getElementById('weight-row').style.display=form.weightEnabled?'flex':'none';}
+function toggleWeight(){form.weightEnabled=!form.weightEnabled;document.getElementById('weight-toggle').className='toggle'+(form.weightEnabled?' on':'');const wr=document.getElementById('weight-row');wr.style.display=form.weightEnabled?'flex':'none';if(form.weightEnabled)initDrums();}
  
 function updateTimeSummary() {
   const field=document.getElementById('time-summary-field');
@@ -589,7 +776,7 @@ function updateTimerUI() {
 function renderRepsMode(body) {
   const rb=wEx.repsEnabled?`<div class="reps-big">${wEx.reps}</div><div class="reps-label">répétitions</div>`:`<div class="reps-label" style="margin-bottom:0;font-size:16px;color:var(--text)">Effectue ta série</div>`;
   const pb=wCurrent>0?`<button class="prev-serie-btn" onclick="prevSerie()">← Série précédente</button>`:'';
-  body.innerHTML=`<div class="reps-display"><div class="reps-info">SÉRIE ${wCurrent+1} / ${wEx.sets}</div>${rb}<div style="flex:1"></div><button class="validate-btn" onclick="validateSerie()">✓ SÉRIE VALIDÉE</button>${pb}</div>`;
+  body.innerHTML=`<div class="reps-display"><div class="reps-info">SÉRIE ${wCurrent+1} / ${wEx.sets}</div>${rb}<button class="validate-btn" onclick="validateSerie()"><span style="font-size:42px">✓</span><span>VALIDÉE</span></button>${pb}</div>`;
 }
  
 function prevSerie() {
