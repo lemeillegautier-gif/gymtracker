@@ -192,6 +192,31 @@
   .done-btn { width: 100%; padding: 18px; border-radius: 16px; background: var(--accent); border: none; font-family: 'Bebas Neue', sans-serif; font-size: 20px; letter-spacing: 2px; color: var(--bg); cursor: pointer; margin-bottom: 12px; }
   .done-btn-outline { width: 100%; padding: 18px; border-radius: 16px; background: transparent; border: 1px solid var(--border); font-family: 'Bebas Neue', sans-serif; font-size: 20px; letter-spacing: 2px; color: var(--muted); cursor: pointer; }
  
+  .fab-cal { position: fixed; bottom: 28px; left: 24px; width: 56px; height: 56px; border-radius: 50%; background: var(--surface); border: 1px solid var(--border); cursor: pointer; font-size: 24px; color: var(--text); display: flex; align-items: center; justify-content: center; z-index: 100; }
+ 
+  /* CALENDAR */
+  #calendar { overflow: hidden; }
+  .cal-nav { display: flex; align-items: center; justify-content: space-between; padding: 16px 24px 8px; }
+  .cal-nav-btn { width: 40px; height: 40px; border-radius: 10px; background: var(--surface); border: 1px solid var(--border); color: var(--text); font-size: 22px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+  .cal-month-label { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 3px; color: var(--text); text-transform: uppercase; }
+  .cal-grid-header { display: grid; grid-template-columns: repeat(7,1fr); padding: 0 16px; margin-bottom: 4px; }
+  .cal-grid-header div { text-align: center; font-size: 11px; font-weight: 600; color: var(--muted); padding: 6px 0; letter-spacing: 1px; }
+  .cal-grid { display: grid; grid-template-columns: repeat(7,1fr); padding: 0 16px; gap: 4px; }
+  .cal-cell { aspect-ratio: 1; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-direction: column; font-size: 14px; font-weight: 500; cursor: pointer; position: relative; color: var(--muted); background: transparent; border: none; gap: 2px; }
+  .cal-cell.in-month { color: var(--text); }
+  .cal-cell.today { background: var(--surface2); color: var(--accent); font-weight: 700; }
+  .cal-cell.has-session { color: var(--text); }
+  .cal-cell.selected { background: var(--accent); color: var(--bg) !important; border-radius: 50%; }
+  .cal-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); }
+  .cal-cell.selected .cal-dot { background: var(--bg); }
+  .cal-day-detail { flex: 1; overflow-y: auto; padding: 16px 24px 40px; display: flex; flex-direction: column; gap: 10px; }
+  .cal-detail-title { font-family: 'Bebas Neue', sans-serif; font-size: 13px; letter-spacing: 3px; color: var(--muted); margin-bottom: 4px; }
+  .cal-session-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; }
+  .cal-session-name { font-weight: 600; font-size: 15px; margin-bottom: 4px; }
+  .cal-session-meta { font-size: 12px; color: var(--muted); }
+  .cal-session-weight { font-size: 13px; color: var(--accent2); font-weight: 600; margin-top: 4px; }
+  .cal-empty { color: var(--muted); font-size: 14px; text-align: center; padding: 20px 0; }
+ 
   /* HISTORY */
   #history { padding: 0; }
   .history-list { padding: 20px 24px 60px; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 10px; }
@@ -210,6 +235,7 @@
   <div class="section-title">MES EXERCICES</div>
   <div class="exercise-list" id="exercise-list"></div>
   <button class="fab" onclick="openCreate()">+</button>
+  <button class="fab-cal" onclick="openCalendar()">📅</button>
 </div>
  
 <!-- CREATE -->
@@ -327,6 +353,24 @@
     <div class="page-title" id="hist-title">HISTORIQUE</div>
   </div>
   <div class="history-list" id="history-list"></div>
+</div>
+ 
+<!-- CALENDAR -->
+<div id="calendar" class="screen">
+  <div class="page-header">
+    <button class="back-btn" onclick="showScreen('home')">←</button>
+    <div class="page-title">CALENDRIER</div>
+  </div>
+  <div class="cal-nav">
+    <button class="cal-nav-btn" onclick="calPrevMonth()">‹</button>
+    <div class="cal-month-label" id="cal-month-label"></div>
+    <button class="cal-nav-btn" onclick="calNextMonth()">›</button>
+  </div>
+  <div class="cal-grid-header">
+    <div>L</div><div>M</div><div>M</div><div>J</div><div>V</div><div>S</div><div>D</div>
+  </div>
+  <div class="cal-grid" id="cal-grid"></div>
+  <div class="cal-day-detail" id="cal-day-detail"></div>
 </div>
  
 <!-- CONTEXT MENU -->
@@ -656,6 +700,18 @@ function saveExercise() {
   const name=document.getElementById('ex-name').value.trim();
   if(!name){alert('Donne un nom à ton exercice !');return;}
   const ex={name,type:form.type,sets:form.sets,workSecs:form.workSecs,reps:form.reps,repsEnabled:form.repsEnabled,pauseEnabled:form.pauseEnabled,pauseSecs:form.pauseSecs,autoMode:form.autoMode,weightEnabled:form.weightEnabled,weight:form.weight};
+ 
+  // Journal poids : enregistre si poids activé et (création ou poids changé)
+  if (form.weightEnabled) {
+    const prevWeight = editingIdx !== null ? (exercises[editingIdx].weight || null) : null;
+    const prevEnabled = editingIdx !== null ? (exercises[editingIdx].weightEnabled || false) : false;
+    if (!prevEnabled || prevWeight !== form.weight) {
+      const wlog = JSON.parse(localStorage.getItem('gymflow_weightlog')||'[]');
+      wlog.push({ exName: name, date: new Date().toISOString(), weight: form.weight, action: editingIdx === null ? 'create' : 'update' });
+      localStorage.setItem('gymflow_weightlog', JSON.stringify(wlog));
+    }
+  }
+ 
   if(editingIdx!==null)exercises[editingIdx]=ex; else exercises.push(ex);
   localStorage.setItem('gymflow_exercises',JSON.stringify(exercises));
   renderHome(); goHome();
@@ -822,34 +878,221 @@ function endPauseOverlay(onDone) {
  
 // ===== HISTORY =====
 function openHistory() {
-  const allHistory=JSON.parse(localStorage.getItem('gymflow_history')||'[]');
-  const title=document.getElementById('hist-title');
-  const list=document.getElementById('history-list');
-  const backBtn=document.getElementById('hist-back');
+  const title = document.getElementById('hist-title');
+  const list = document.getElementById('history-list');
+  const backBtn = document.getElementById('hist-back');
   const fromWorkout = document.getElementById('workout').classList.contains('active');
-  backBtn.onclick=()=>showScreen(fromWorkout?'workout':'home');
-  const entries=wEx&&fromWorkout?allHistory.filter(h=>h.exName===wEx.name):allHistory;
-  title.textContent=wEx&&fromWorkout?'HISTORIQUE — '+wEx.name.toUpperCase():'HISTORIQUE';
-  list.innerHTML='';
-  if(!entries.length){list.innerHTML=`<div class="empty-state"><div class="emoji">📋</div><p>Aucune séance enregistrée</p></div>`;showScreen('history');return;}
-  [...entries].reverse().forEach(h=>{
-    const globalIdx=allHistory.indexOf(h);
-    const d=new Date(h.date);
-    const ds=d.toLocaleDateString('fr-FR',{weekday:'short',day:'2-digit',month:'long'})+' · '+d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
-    const info=h.type==='timer'?`${h.sets} séries · ${fmtTime(h.workSecs)} travail`:`${h.sets} séries${h.reps?' × '+h.reps+' reps':''}`;
-    const entry=document.createElement('div');
-    entry.className='history-entry';
-    entry.innerHTML=`<button class="history-del" onclick="deleteHistoryEntry(${globalIdx})">🗑</button><div class="history-date">${ds}${h.exName&&!wEx?' — '+h.exName:''}</div><div class="history-info">${info}</div>${h.weight?`<div class="history-weight">⚖️ ${h.weight} kg</div>`:''}`;
-    list.appendChild(entry);
-  });
+  backBtn.onclick = () => showScreen(fromWorkout ? 'workout' : 'home');
+ 
+  const allSessions = JSON.parse(localStorage.getItem('gymflow_history') || '[]');
+  const allWeightLog = JSON.parse(localStorage.getItem('gymflow_weightlog') || '[]');
+ 
+  const exName = wEx && fromWorkout ? wEx.name : null;
+  title.textContent = exName ? 'HISTORIQUE — ' + exName.toUpperCase() : 'HISTORIQUE';
+ 
+  const sessions = exName ? allSessions.filter(h => h.exName === exName) : allSessions;
+  const weightLog = exName ? allWeightLog.filter(h => h.exName === exName) : allWeightLog;
+ 
+  list.innerHTML = '';
+ 
+  if (!sessions.length && !weightLog.length) {
+    list.innerHTML = `<div class="empty-state"><div class="emoji">📋</div><p>Aucun historique enregistré</p></div>`;
+    showScreen('history');
+    return;
+  }
+ 
+  // Section poids
+  if (weightLog.length) {
+    const secTitle = document.createElement('div');
+    secTitle.style.cssText = 'font-family:Bebas Neue,sans-serif;font-size:13px;letter-spacing:3px;color:var(--accent2);margin-bottom:8px;margin-top:4px;';
+    secTitle.textContent = '⚖️ ÉVOLUTION DU POIDS';
+    list.appendChild(secTitle);
+ 
+    [...weightLog].reverse().forEach((h, ri) => {
+      const globalIdx = allWeightLog.indexOf(h);
+      const d = new Date(h.date);
+      const ds = d.toLocaleDateString('fr-FR', {weekday:'short', day:'2-digit', month:'long', year:'numeric'});
+      const actionLabel = h.action === 'create' ? 'Création' : 'Modification';
+      const entry = document.createElement('div');
+      entry.className = 'history-entry';
+      entry.style.borderLeft = '3px solid var(--accent2)';
+      entry.innerHTML = `
+        <button class="history-del" onclick="deleteWeightEntry(${globalIdx})">🗑</button>
+        <div class="history-date">${ds}${!exName ? ' — ' + h.exName : ''}</div>
+        <div class="history-weight" style="font-size:22px">⚖️ ${h.weight} kg</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:4px">${actionLabel}</div>`;
+      list.appendChild(entry);
+    });
+  }
+ 
+  // Section séances
+  if (sessions.length) {
+    const secTitle = document.createElement('div');
+    secTitle.style.cssText = 'font-family:Bebas Neue,sans-serif;font-size:13px;letter-spacing:3px;color:var(--muted);margin-bottom:8px;margin-top:20px;';
+    secTitle.textContent = '🏋️ SÉANCES';
+    list.appendChild(secTitle);
+ 
+    [...sessions].reverse().forEach(h => {
+      const globalIdx = allSessions.indexOf(h);
+      const d = new Date(h.date);
+      const ds = d.toLocaleDateString('fr-FR', {weekday:'short', day:'2-digit', month:'long'}) + ' · ' + d.toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'});
+      const info = h.type === 'timer' ? `${h.sets} séries · ${fmtTime(h.workSecs)} travail` : `${h.sets} séries${h.reps ? ' × ' + h.reps + ' reps' : ''}`;
+      const entry = document.createElement('div');
+      entry.className = 'history-entry';
+      entry.innerHTML = `
+        <button class="history-del" onclick="deleteHistoryEntry(${globalIdx})">🗑</button>
+        <div class="history-date">${ds}${!exName ? ' — ' + h.exName : ''}</div>
+        <div class="history-info">${info}</div>
+        ${h.weight ? `<div class="history-weight">⚖️ ${h.weight} kg</div>` : ''}`;
+      list.appendChild(entry);
+    });
+  }
+ 
   showScreen('history');
 }
  
-function deleteHistoryEntry(idx) {
-  const h=JSON.parse(localStorage.getItem('gymflow_history')||'[]');
-  h.splice(idx,1);
-  localStorage.setItem('gymflow_history',JSON.stringify(h));
+function deleteWeightEntry(idx) {
+  const h = JSON.parse(localStorage.getItem('gymflow_weightlog') || '[]');
+  h.splice(idx, 1);
+  localStorage.setItem('gymflow_weightlog', JSON.stringify(h));
   openHistory();
+}
+ 
+function deleteHistoryEntry(idx) {
+  const h = JSON.parse(localStorage.getItem('gymflow_history') || '[]');
+  h.splice(idx, 1);
+  localStorage.setItem('gymflow_history', JSON.stringify(h));
+  openHistory();
+}
+ 
+// ===== CALENDAR =====
+let calYear = new Date().getFullYear();
+let calMonth = new Date().getMonth();
+let calSelectedDate = null;
+ 
+function openCalendar() {
+  calYear = new Date().getFullYear();
+  calMonth = new Date().getMonth();
+  calSelectedDate = null;
+  renderCalendar();
+  document.getElementById('cal-day-detail').innerHTML = '';
+  showScreen('calendar');
+}
+ 
+function calPrevMonth() {
+  calMonth--;
+  if (calMonth < 0) { calMonth = 11; calYear--; }
+  calSelectedDate = null;
+  renderCalendar();
+  document.getElementById('cal-day-detail').innerHTML = '';
+}
+ 
+function calNextMonth() {
+  calMonth++;
+  if (calMonth > 11) { calMonth = 0; calYear++; }
+  calSelectedDate = null;
+  renderCalendar();
+  document.getElementById('cal-day-detail').innerHTML = '';
+}
+ 
+function renderCalendar() {
+  const sessions = JSON.parse(localStorage.getItem('gymflow_history') || '[]');
+  const today = new Date();
+ 
+  // Build set of dates with sessions — key: "YYYY-MM-DD"
+  const sessionDates = {};
+  sessions.forEach(s => {
+    const d = new Date(s.date);
+    const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    if (!sessionDates[key]) sessionDates[key] = [];
+    sessionDates[key].push(s);
+  });
+ 
+  // Month label
+  const monthNames = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+  document.getElementById('cal-month-label').textContent = monthNames[calMonth] + ' ' + calYear;
+ 
+  // First day of month (monday-based)
+  const firstDay = new Date(calYear, calMonth, 1);
+  let startDow = firstDay.getDay(); // 0=sun
+  startDow = startDow === 0 ? 6 : startDow - 1; // convert to mon=0
+ 
+  const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+  const daysInPrev = new Date(calYear, calMonth, 0).getDate();
+ 
+  const grid = document.getElementById('cal-grid');
+  grid.innerHTML = '';
+ 
+  const totalCells = Math.ceil((startDow + daysInMonth) / 7) * 7;
+ 
+  for (let i = 0; i < totalCells; i++) {
+    const cell = document.createElement('button');
+    cell.className = 'cal-cell';
+    let day, month, year, inMonth = false;
+ 
+    if (i < startDow) {
+      day = daysInPrev - startDow + i + 1;
+      month = calMonth - 1;
+      year = calYear;
+      if (month < 0) { month = 11; year--; }
+    } else if (i >= startDow + daysInMonth) {
+      day = i - startDow - daysInMonth + 1;
+      month = calMonth + 1;
+      year = calYear;
+      if (month > 11) { month = 0; year++; }
+    } else {
+      day = i - startDow + 1;
+      month = calMonth;
+      year = calYear;
+      inMonth = true;
+    }
+ 
+    const dateKey = `${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    const isToday = year === today.getFullYear() && month === today.getMonth() && day === today.getDate();
+    const hasSessions = !!sessionDates[dateKey];
+    const isSelected = calSelectedDate === dateKey;
+ 
+    if (inMonth) cell.classList.add('in-month');
+    if (isToday) cell.classList.add('today');
+    if (hasSessions) cell.classList.add('has-session');
+    if (isSelected) cell.classList.add('selected');
+ 
+    cell.innerHTML = `<span>${day}</span>${hasSessions ? '<div class="cal-dot"></div>' : ''}`;
+ 
+    cell.addEventListener('click', () => {
+      calSelectedDate = dateKey;
+      renderCalendar();
+      showDayDetail(dateKey, sessionDates[dateKey] || []);
+    });
+ 
+    grid.appendChild(cell);
+  }
+}
+ 
+function showDayDetail(dateKey, sessions) {
+  const detail = document.getElementById('cal-day-detail');
+  const [y, m, d] = dateKey.split('-');
+  const dateLabel = new Date(+y, +m-1, +d).toLocaleDateString('fr-FR', {weekday:'long', day:'numeric', month:'long'});
+ 
+  if (!sessions.length) {
+    detail.innerHTML = `<div class="cal-detail-title">${dateLabel.toUpperCase()}</div><div class="cal-empty">Aucune séance ce jour</div>`;
+    return;
+  }
+ 
+  let html = `<div class="cal-detail-title">${dateLabel.toUpperCase()}</div>`;
+  sessions.forEach(s => {
+    const time = new Date(s.date).toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'});
+    const meta = s.type === 'timer'
+      ? `${s.sets} séries · ${fmtTime(s.workSecs)} travail`
+      : `${s.sets} séries${s.reps ? ' × ' + s.reps + ' reps' : ''}`;
+    const weightStr = s.weight ? `<div class="cal-session-weight">⚖️ ${s.weight} kg</div>` : '';
+    html += `<div class="cal-session-card">
+      <div class="cal-session-name">${s.exName}</div>
+      <div class="cal-session-meta">${time} · ${meta}</div>
+      ${weightStr}
+    </div>`;
+  });
+  detail.innerHTML = html;
 }
  
 // ===== NAV =====
