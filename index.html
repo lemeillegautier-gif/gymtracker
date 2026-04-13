@@ -217,6 +217,19 @@
   .cal-session-weight { font-size: 13px; color: var(--accent2); font-weight: 600; margin-top: 4px; }
   .cal-empty { color: var(--muted); font-size: 14px; text-align: center; padding: 20px 0; }
  
+  .countdown-opt { padding: 8px 16px; border-radius: 10px; border: 2px solid var(--border); background: var(--surface2); color: var(--muted); font-family: 'Bebas Neue', sans-serif; font-size: 18px; cursor: pointer; transition: all 0.15s; }
+  .countdown-opt.active { border-color: var(--accent); background: rgba(232,255,71,0.1); color: var(--accent); }
+ 
+  /* COUNTDOWN OVERLAY */
+  .countdown-overlay { position: fixed; inset: 0; background: rgba(13,13,15,0.97); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 250; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+  .countdown-overlay.visible { opacity: 1; pointer-events: all; }
+  .countdown-num { font-family: 'Bebas Neue', sans-serif; font-size: 160px; color: var(--accent); line-height: 1; animation: cd-pop 0.3s ease; }
+  @keyframes cd-pop { 0% { transform: scale(1.3); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+  .countdown-label { font-family: 'Bebas Neue', sans-serif; font-size: 14px; letter-spacing: 4px; color: var(--muted); margin-top: 8px; }
+ 
+  /* STOP SERIE */
+  .stop-serie-btn { padding: 12px 24px; border-radius: 14px; border: 1px solid var(--red); background: transparent; color: var(--red); font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; margin-top: 8px; }
+ 
   /* HISTORY */
   #history { padding: 0; }
   .history-list { padding: 20px 24px 60px; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 10px; }
@@ -287,6 +300,23 @@
       </div>
     </div>
     <div class="field">
+      <label>Décompte avant série</label>
+      <div class="sets-config">
+        <div class="toggle-row">
+          <div class="set-label">Activer le décompte<div class="set-sublabel">Compte à rebours avant le lancement</div></div>
+          <div class="toggle" id="countdown-toggle" onclick="toggleCountdown()"></div>
+        </div>
+        <div class="set-row" id="countdown-row" style="display:none">
+          <div class="set-label">Durée</div>
+          <div style="display:flex;gap:8px">
+            <button class="countdown-opt" id="cd-3" onclick="selectCountdown(3)">3s</button>
+            <button class="countdown-opt" id="cd-5" onclick="selectCountdown(5)">5s</button>
+            <button class="countdown-opt" id="cd-10" onclick="selectCountdown(10)">10s</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="field">
       <label>Poids</label>
       <div class="sets-config">
         <div class="toggle-row">
@@ -344,6 +374,10 @@
     <div class="pause-sub">Prépare-toi</div>
     <button class="skip-pause-btn" onclick="skipPause()">PASSER →</button>
   </div>
+  <div class="countdown-overlay" id="countdown-overlay">
+    <div class="countdown-label">PRÊT DANS</div>
+    <div class="countdown-num" id="countdown-num">3</div>
+  </div>
 </div>
  
 <!-- HISTORY -->
@@ -387,7 +421,7 @@
 <script>
 // ===== DATA =====
 let exercises = JSON.parse(localStorage.getItem('gymflow_exercises') || '[]');
-const form = { type:'timer', sets:5, workSecs:60, reps:10, repsEnabled:false, pauseEnabled:false, pauseSecs:30, autoMode:false, weightEnabled:false, weight:10 };
+const form = { type:'timer', sets:5, workSecs:60, reps:10, repsEnabled:false, pauseEnabled:false, pauseSecs:30, autoMode:false, weightEnabled:false, weight:10, countdownEnabled:false, countdownSecs:3 };
 let editingIdx = null;
  
 // ===== HOME =====
@@ -486,7 +520,7 @@ function fmtTime(s) { if(s<60) return s+'s'; const m=Math.floor(s/60),r=s%60; re
 // ===== CREATE =====
 function openCreate() {
   editingIdx=null;
-  Object.assign(form,{type:'timer',sets:5,workSecs:60,reps:10,repsEnabled:false,pauseEnabled:false,pauseSecs:30,autoMode:false,weightEnabled:false,weight:10});
+  Object.assign(form,{type:'timer',sets:5,workSecs:60,reps:10,repsEnabled:false,pauseEnabled:false,pauseSecs:30,autoMode:false,weightEnabled:false,weight:10,countdownEnabled:false,countdownSecs:3});
   document.getElementById('ex-name').value='';
   document.getElementById('create-title').textContent='NOUVEL EXERCICE';
   renderTypeForm(); showScreen('create');
@@ -494,7 +528,7 @@ function openCreate() {
  
 function openEdit(i) {
   editingIdx=i; const ex=exercises[i];
-  Object.assign(form,{type:ex.type,sets:ex.sets,workSecs:ex.workSecs||60,reps:ex.reps||10,repsEnabled:ex.repsEnabled||false,pauseEnabled:ex.pauseEnabled,pauseSecs:ex.pauseSecs||30,autoMode:ex.autoMode||false,weightEnabled:ex.weightEnabled||false,weight:ex.weight||10});
+  Object.assign(form,{type:ex.type,sets:ex.sets,workSecs:ex.workSecs||60,reps:ex.reps||10,repsEnabled:ex.repsEnabled||false,pauseEnabled:ex.pauseEnabled,pauseSecs:ex.pauseSecs||30,autoMode:ex.autoMode||false,weightEnabled:ex.weightEnabled||false,weight:ex.weight||10,countdownEnabled:ex.countdownEnabled||false,countdownSecs:ex.countdownSecs||3});
   document.getElementById('ex-name').value=ex.name;
   document.getElementById('create-title').textContent='MODIFIER';
   renderTypeForm(); showScreen('create');
@@ -540,6 +574,9 @@ function renderTypeForm() {
   document.getElementById('pause-toggle').className='toggle'+(form.pauseEnabled?' on':'');
   document.getElementById('pause-duration-row').style.display=form.pauseEnabled?'flex':'none';
   document.getElementById('pause-val').textContent=fmtTime(form.pauseSecs);
+  document.getElementById('countdown-toggle').className='toggle'+(form.countdownEnabled?' on':'');
+  document.getElementById('countdown-row').style.display=form.countdownEnabled?'flex':'none';
+  selectCountdown(form.countdownSecs, true);
   document.getElementById('weight-toggle').className='toggle'+(form.weightEnabled?' on':'');
   const wr=document.getElementById('weight-row');
   wr.style.display=form.weightEnabled?'flex':'none';
@@ -685,6 +722,8 @@ function toggleReps(){form.repsEnabled=!form.repsEnabled;document.getElementById
 function togglePause(){form.pauseEnabled=!form.pauseEnabled;document.getElementById('pause-toggle').className='toggle'+(form.pauseEnabled?' on':'');document.getElementById('pause-duration-row').style.display=form.pauseEnabled?'flex':'none';updateTimeSummary();}
 function toggleAuto(){form.autoMode=!form.autoMode;document.getElementById('auto-toggle').className='toggle'+(form.autoMode?' on':'');}
 function toggleWeight(){form.weightEnabled=!form.weightEnabled;document.getElementById('weight-toggle').className='toggle'+(form.weightEnabled?' on':'');const wr=document.getElementById('weight-row');wr.style.display=form.weightEnabled?'flex':'none';if(form.weightEnabled)initDrums();}
+function toggleCountdown(){form.countdownEnabled=!form.countdownEnabled;document.getElementById('countdown-toggle').className='toggle'+(form.countdownEnabled?' on':'');document.getElementById('countdown-row').style.display=form.countdownEnabled?'flex':'none';}
+function selectCountdown(val,silent){form.countdownSecs=val;[3,5,10].forEach(v=>{const el=document.getElementById('cd-'+v);if(el)el.className='countdown-opt'+(v===val?' active':'');});}
  
 function updateTimeSummary() {
   const field=document.getElementById('time-summary-field');
@@ -699,7 +738,7 @@ function updateTimeSummary() {
 function saveExercise() {
   const name=document.getElementById('ex-name').value.trim();
   if(!name){alert('Donne un nom à ton exercice !');return;}
-  const ex={name,type:form.type,sets:form.sets,workSecs:form.workSecs,reps:form.reps,repsEnabled:form.repsEnabled,pauseEnabled:form.pauseEnabled,pauseSecs:form.pauseSecs,autoMode:form.autoMode,weightEnabled:form.weightEnabled,weight:form.weight};
+  const ex={name,type:form.type,sets:form.sets,workSecs:form.workSecs,reps:form.reps,repsEnabled:form.repsEnabled,pauseEnabled:form.pauseEnabled,pauseSecs:form.pauseSecs,autoMode:form.autoMode,weightEnabled:form.weightEnabled,weight:form.weight,countdownEnabled:form.countdownEnabled,countdownSecs:form.countdownSecs};
  
   // Journal poids : enregistre si poids activé et (création ou poids changé)
   if (form.weightEnabled) {
@@ -718,7 +757,7 @@ function saveExercise() {
 }
  
 // ===== WORKOUT =====
-let wEx=null, wExIdx=-1, wCurrent=0, wDone=false;
+let wEx=null, wExIdx=-1, wCurrent=0, wDone=false, wPartialSeries=null;
 let timerInterval=null, timerSecs=0, timerRunning=false;
 let pauseInterval=null, pauseRemaining=0;
  
@@ -726,7 +765,7 @@ function restartWorkout(){if(wExIdx>=0&&wExIdx<exercises.length)startWorkout(wEx
  
 function startWorkout(i) {
   if(i<0||i>=exercises.length){goHome();return;}
-  wEx=exercises[i]; wExIdx=i; wCurrent=0; wDone=false; clearTimers();
+  wEx=exercises[i]; wExIdx=i; wCurrent=0; wDone=false; wPartialSeries=null; clearTimers();
   document.getElementById('workout-name').textContent=wEx.name;
   const wb=document.getElementById('workout-weight-bar');
   let wbParts = [];
@@ -750,15 +789,23 @@ function renderWorkoutBody() {
   const body=document.getElementById('workout-body');
   if(wDone){
     saveHistory();
-    body.innerHTML=`<div class="done-screen"><div class="done-emoji">🏆</div><div class="done-title">TERMINÉ !</div><div class="done-sub">${wEx.sets} séries de ${wEx.name} complétées. Bravo !</div><button class="done-btn" onclick="restartWorkout()">🔁 Recommencer</button><button class="done-btn-outline" onclick="goHome()">← Retour</button></div>`;
+    body.innerHTML=`<div class="done-screen"><div class="done-emoji">🏆</div><div class="done-title">TERMINÉ !</div><div class="done-sub">${wEx.sets} séries de ${wEx.name} complétées. Bravo !</div><button class="done-btn" onclick="restartWorkout()">🔁 Recommencer</button><button class="done-btn-outline" onclick="goHome()">🏠 Accueil</button></div>`;
     return;
   }
-  if(wEx.type==='timer') renderTimerMode(body); else renderRepsMode(body);
+  if(wEx.type==='timer') launchTimerSerie(); else launchRepsSerie();
 }
  
 function saveHistory() {
   const h=JSON.parse(localStorage.getItem('gymflow_history')||'[]');
-  h.push({exIdx:wExIdx,exName:wEx.name,date:new Date().toISOString(),sets:wEx.sets,reps:wEx.repsEnabled?wEx.reps:null,weight:wEx.weightEnabled?wEx.weight:null,type:wEx.type,workSecs:wEx.workSecs});
+  const setsAchieved = wPartialSeries ? wCurrent + ' + ' + wPartialSeries : String(wCurrent);
+  h.push({
+    exIdx:wExIdx, exName:wEx.name, date:new Date().toISOString(),
+    sets:wEx.sets, setsAchieved,
+    reps:wEx.repsEnabled?wEx.reps:null,
+    partialReps: wPartialSeries || null,
+    weight:wEx.weightEnabled?wEx.weight:null,
+    type:wEx.type, workSecs:wEx.workSecs
+  });
   localStorage.setItem('gymflow_history',JSON.stringify(h));
 }
  
@@ -817,8 +864,8 @@ function timerPhaseEnd() {
   wCurrent++;
   if(wCurrent>=wEx.sets){wDone=true;renderSeriesProgress();renderWorkoutBody();return;}
   renderSeriesProgress();
-  if(wEx.pauseEnabled) showPauseOverlay(()=>renderTimerMode(document.getElementById('workout-body')));
-  else renderTimerMode(document.getElementById('workout-body'));
+  if(wEx.pauseEnabled) showPauseOverlay(()=>launchTimerSerie());
+  else launchTimerSerie();
 }
  
 function updateTimerUI() {
@@ -828,11 +875,98 @@ function updateTimerUI() {
   rp.style.strokeDashoffset=(Math.PI*2*96)*(1-timerSecs/wEx.workSecs);
 }
  
-// REPS
+// COUNTDOWN
+let cdInterval=null;
+function runCountdown(secs, onDone) {
+  const ov=document.getElementById('countdown-overlay');
+  const num=document.getElementById('countdown-num');
+  let remaining=secs;
+  num.textContent=remaining;
+  // Re-trigger animation each second
+  num.style.animation='none'; void num.offsetWidth; num.style.animation='cd-pop 0.3s ease';
+  ov.classList.add('visible');
+  cdInterval=setInterval(()=>{
+    remaining--;
+    if(remaining<=0){
+      clearInterval(cdInterval);
+      ov.classList.remove('visible');
+      onDone();
+    } else {
+      num.textContent=remaining;
+      num.style.animation='none'; void num.offsetWidth; num.style.animation='cd-pop 0.3s ease';
+    }
+  },1000);
+}
+ 
+function launchTimerSerie() {
+  const body=document.getElementById('workout-body');
+  if(wEx.countdownEnabled){
+    runCountdown(wEx.countdownSecs, ()=>{ renderTimerMode(body); });
+  } else {
+    renderTimerMode(body);
+  }
+}
+ 
+function launchRepsSerie() {
+  const body=document.getElementById('workout-body');
+  if(wEx.countdownEnabled){
+    runCountdown(wEx.countdownSecs, ()=>{ renderRepsMode(body); });
+  } else {
+    renderRepsMode(body);
+  }
+}
+ 
+// STOP SERIE (série incomplète)
+function stopSerie() {
+  // Prompt inline pour saisir combien de reps faites
+  const body=document.getElementById('workout-body');
+  const currentHtml=body.innerHTML;
+  const targetReps=wEx.repsEnabled?wEx.reps:null;
+  const placeholder=targetReps?`Ex: ${Math.floor(targetReps/2)}`:'Ex: 5';
+  body.innerHTML=`
+    <div class="reps-display">
+      <div class="reps-info">SÉRIE STOPPÉE</div>
+      <div style="font-size:14px;color:var(--muted);text-align:center;margin-bottom:24px">${targetReps?`Objectif : ${targetReps} reps`:'Combien de répétitions as-tu fait ?'}</div>
+      <input class="input" type="number" id="partial-input" placeholder="${placeholder}" style="max-width:200px;text-align:center;font-size:28px;font-family:Bebas Neue,sans-serif;margin-bottom:16px">
+      <button class="validate-btn" onclick="confirmStopSerie()" style="width:100%;border-radius:14px;height:auto;padding:18px"><span>✓ CONFIRMER</span></button>
+      <button class="prev-serie-btn" onclick="cancelStop()">Annuler</button>
+    </div>`;
+  body._cancelHtml=currentHtml;
+}
+ 
+function cancelStop() {
+  const body=document.getElementById('workout-body');
+  body.innerHTML=body._cancelHtml;
+}
+ 
+function confirmStopSerie() {
+  const val=parseInt(document.getElementById('partial-input').value)||0;
+  wPartialSeries=val;
+  // Save and go to done screen
+  wDone=true;
+  renderSeriesProgress();
+  const body=document.getElementById('workout-body');
+  saveHistory();
+  const setsStr=wCurrent>0?`${wCurrent} série${wCurrent>1?'s':''} complète${wCurrent>1?'s':''} + `:'';
+  const repsStr=wEx.repsEnabled?` (${val}/${wEx.reps} reps)`:`${val} reps`;
+  body.innerHTML=`<div class="done-screen">
+    <div class="done-emoji">💪</div>
+    <div class="done-title">BIEN JOUÉ !</div>
+    <div class="done-sub">${setsStr}série stoppée à${repsStr}.<br>C'est enregistré !</div>
+    <button class="done-btn" onclick="restartWorkout()">🔁 Recommencer</button>
+    <button class="done-btn-outline" onclick="goHome()">🏠 Accueil</button>
+  </div>`;
+}
 function renderRepsMode(body) {
   const rb=wEx.repsEnabled?`<div class="reps-big">${wEx.reps}</div><div class="reps-label">répétitions</div>`:`<div class="reps-label" style="margin-bottom:0;font-size:16px;color:var(--text)">Effectue ta série</div>`;
   const pb=wCurrent>0?`<button class="prev-serie-btn" onclick="prevSerie()">← Série précédente</button>`:'';
-  body.innerHTML=`<div class="reps-display"><div class="reps-info">SÉRIE ${wCurrent+1} / ${wEx.sets}</div>${rb}<button class="validate-btn" onclick="validateSerie()"><span style="font-size:42px">✓</span><span>VALIDÉE</span></button>${pb}</div>`;
+  body.innerHTML=`<div class="reps-display">
+    <div class="reps-info">SÉRIE ${wCurrent+1} / ${wEx.sets}</div>
+    ${rb}
+    <button class="validate-btn" onclick="validateSerie()"><span style="font-size:42px">✓</span><span>VALIDÉE</span></button>
+    ${pb}
+    <button class="stop-serie-btn" onclick="stopSerie()">⛔ Stopper la série</button>
+  </div>`;
 }
  
 function prevSerie() {
@@ -846,8 +980,8 @@ function validateSerie() {
   wCurrent++;
   if(wCurrent>=wEx.sets){wDone=true;renderSeriesProgress();renderWorkoutBody();return;}
   renderSeriesProgress();
-  if(wEx.pauseEnabled)showPauseOverlay(()=>renderRepsMode(document.getElementById('workout-body')));
-  else renderRepsMode(document.getElementById('workout-body'));
+  if(wEx.pauseEnabled)showPauseOverlay(()=>launchRepsSerie());
+  else launchRepsSerie();
 }
  
 // PAUSE
@@ -936,7 +1070,11 @@ function openHistory() {
       const globalIdx = allSessions.indexOf(h);
       const d = new Date(h.date);
       const ds = d.toLocaleDateString('fr-FR', {weekday:'short', day:'2-digit', month:'long'}) + ' · ' + d.toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'});
-      const info = h.type === 'timer' ? `${h.sets} séries · ${fmtTime(h.workSecs)} travail` : `${h.sets} séries${h.reps ? ' × ' + h.reps + ' reps' : ''}`;
+      const sAchieved = h.setsAchieved !== undefined ? h.setsAchieved : h.sets;
+      const partial = h.partialReps ? ` (arrêt : ${h.partialReps} reps)` : '';
+      const info = h.type === 'timer'
+        ? `${sAchieved}/${h.sets} séries · ${fmtTime(h.workSecs)} travail`
+        : `${sAchieved}/${h.sets} séries${h.reps ? ' × ' + h.reps + ' reps' : ''}${partial}`;
       const entry = document.createElement('div');
       entry.className = 'history-entry';
       entry.innerHTML = `
@@ -1082,9 +1220,10 @@ function showDayDetail(dateKey, sessions) {
   let html = `<div class="cal-detail-title">${dateLabel.toUpperCase()}</div>`;
   sessions.forEach(s => {
     const time = new Date(s.date).toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'});
+    const sA = s.setsAchieved !== undefined ? s.setsAchieved : s.sets;
     const meta = s.type === 'timer'
-      ? `${s.sets} séries · ${fmtTime(s.workSecs)} travail`
-      : `${s.sets} séries${s.reps ? ' × ' + s.reps + ' reps' : ''}`;
+      ? `${sA}/${s.sets} séries · ${fmtTime(s.workSecs)} travail`
+      : `${sA}/${s.sets} séries${s.reps ? ' × ' + s.reps + ' reps' : ''}`;
     const weightStr = s.weight ? `<div class="cal-session-weight">⚖️ ${s.weight} kg</div>` : '';
     html += `<div class="cal-session-card">
       <div class="cal-session-name">${s.exName}</div>
@@ -1098,7 +1237,7 @@ function showDayDetail(dateKey, sessions) {
 // ===== NAV =====
 function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');}
 function goHome(){clearTimers();renderHome();showScreen('home');}
-function clearTimers(){clearInterval(timerInterval);clearInterval(pauseInterval);timerRunning=false;}
+function clearTimers(){clearInterval(timerInterval);clearInterval(pauseInterval);clearInterval(cdInterval);timerRunning=false;document.getElementById('countdown-overlay').classList.remove('visible');}
  
 renderHome();
 </script>
