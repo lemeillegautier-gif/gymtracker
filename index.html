@@ -952,13 +952,15 @@ function confirmStopSerie(countCurrent) {
 }
 function renderRepsMode(body) {
   const rb=wEx.repsEnabled?`<div class="reps-big">${wEx.reps}</div><div class="reps-label">répétitions</div>`:`<div class="reps-label" style="margin-bottom:0;font-size:16px;color:var(--text)">Effectue ta série</div>`;
-  const pb=wCurrent>0?`<button class="prev-serie-btn" onclick="prevSerie()">← Série précédente</button>`:'';
+  const bottomBtns = `<div style="display:flex;gap:10px;width:100%">
+    ${wCurrent>0?`<button class="prev-serie-btn" style="flex:1" onclick="prevSerie()">← Précédent</button>`:'<div style="flex:1"></div>'}
+    <button class="stop-serie-btn" style="flex:1" onclick="stopSerie()">⛔ Stop</button>
+  </div>`;
   body.innerHTML=`<div class="reps-display">
     <div class="reps-info">SÉRIE ${wCurrent+1} / ${wEx.sets}</div>
     ${rb}
     <button class="validate-btn" onclick="validateSerie()"><span style="font-size:42px">✓</span><span>VALIDÉE</span></button>
-    ${pb}
-    <button class="stop-serie-btn" onclick="stopSerie()">⛔ Stopper la série</button>
+    ${bottomBtns}
   </div>`;
 }
  
@@ -1236,4 +1238,3 @@ renderHome();
 </script>
 </body>
 </html>
- 
