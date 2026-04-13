@@ -788,21 +788,20 @@ function renderSeriesProgress() {
 function renderWorkoutBody() {
   const body=document.getElementById('workout-body');
   if(wDone){
-    saveHistory();
+    saveHistory(wEx.sets);
     body.innerHTML=`<div class="done-screen"><div class="done-emoji">🏆</div><div class="done-title">TERMINÉ !</div><div class="done-sub">${wEx.sets} séries de ${wEx.name} complétées. Bravo !</div><button class="done-btn" onclick="restartWorkout()">🔁 Recommencer</button><button class="done-btn-outline" onclick="goHome()">🏠 Accueil</button></div>`;
     return;
   }
   if(wEx.type==='timer') launchTimerSerie(); else launchRepsSerie();
 }
  
-function saveHistory() {
+function saveHistory(seriesDone) {
   const h=JSON.parse(localStorage.getItem('gymflow_history')||'[]');
-  const setsAchieved = wPartialSeries ? wCurrent + ' + ' + wPartialSeries : String(wCurrent);
+  const achieved = seriesDone !== undefined ? seriesDone : wCurrent;
   h.push({
     exIdx:wExIdx, exName:wEx.name, date:new Date().toISOString(),
-    sets:wEx.sets, setsAchieved,
+    sets:wEx.sets, setsAchieved:achieved,
     reps:wEx.repsEnabled?wEx.reps:null,
-    partialReps: wPartialSeries || null,
     weight:wEx.weightEnabled?wEx.weight:null,
     type:wEx.type, workSecs:wEx.workSecs
   });
@@ -918,20 +917,18 @@ function launchRepsSerie() {
  
 // STOP SERIE (série incomplète)
 function stopSerie() {
-  // Prompt inline pour saisir combien de reps faites
   const body=document.getElementById('workout-body');
   const currentHtml=body.innerHTML;
-  const targetReps=wEx.repsEnabled?wEx.reps:null;
-  const placeholder=targetReps?`Ex: ${Math.floor(targetReps/2)}`:'Ex: 5';
-  body.innerHTML=`
-    <div class="reps-display">
-      <div class="reps-info">SÉRIE STOPPÉE</div>
-      <div style="font-size:14px;color:var(--muted);text-align:center;margin-bottom:24px">${targetReps?`Objectif : ${targetReps} reps`:'Combien de répétitions as-tu fait ?'}</div>
-      <input class="input" type="number" id="partial-input" placeholder="${placeholder}" style="max-width:200px;text-align:center;font-size:28px;font-family:Bebas Neue,sans-serif;margin-bottom:16px">
-      <button class="validate-btn" onclick="confirmStopSerie()" style="width:100%;border-radius:14px;height:auto;padding:18px"><span>✓ CONFIRMER</span></button>
-      <button class="prev-serie-btn" onclick="cancelStop()">Annuler</button>
-    </div>`;
   body._cancelHtml=currentHtml;
+  body.innerHTML=`<div class="reps-display" style="justify-content:center;gap:24px">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:2px;color:var(--text);text-align:center">SÉRIE ${wCurrent+1} COMPTÉE ?</div>
+    <div style="font-size:14px;color:var(--muted);text-align:center">Tu es en cours de série ${wCurrent+1}/${wEx.sets}.<br>Est-ce que tu valides quand même cette série ?</div>
+    <div style="display:flex;gap:12px;width:100%">
+      <button onclick="confirmStopSerie(true)" style="flex:1;padding:20px;border-radius:16px;background:var(--accent);border:none;font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--bg);cursor:pointer">✓ OUI</button>
+      <button onclick="confirmStopSerie(false)" style="flex:1;padding:20px;border-radius:16px;background:var(--surface);border:1px solid var(--border);font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--muted);cursor:pointer">✗ NON</button>
+    </div>
+    <button class="prev-serie-btn" onclick="cancelStop()">← Annuler</button>
+  </div>`;
 }
  
 function cancelStop() {
@@ -939,20 +936,16 @@ function cancelStop() {
   body.innerHTML=body._cancelHtml;
 }
  
-function confirmStopSerie() {
-  const val=parseInt(document.getElementById('partial-input').value)||0;
-  wPartialSeries=val;
-  // Save and go to done screen
-  wDone=true;
-  renderSeriesProgress();
+function confirmStopSerie(countCurrent) {
+  const seriesDone = countCurrent ? wCurrent+1 : wCurrent;
+  wPartialSeries = seriesDone;
+  clearTimers();
+  saveHistory(seriesDone);
   const body=document.getElementById('workout-body');
-  saveHistory();
-  const setsStr=wCurrent>0?`${wCurrent} série${wCurrent>1?'s':''} complète${wCurrent>1?'s':''} + `:'';
-  const repsStr=wEx.repsEnabled?` (${val}/${wEx.reps} reps)`:`${val} reps`;
   body.innerHTML=`<div class="done-screen">
     <div class="done-emoji">💪</div>
     <div class="done-title">BIEN JOUÉ !</div>
-    <div class="done-sub">${setsStr}série stoppée à${repsStr}.<br>C'est enregistré !</div>
+    <div class="done-sub">${seriesDone}/${wEx.sets} séries complétées.<br>C'est enregistré !</div>
     <button class="done-btn" onclick="restartWorkout()">🔁 Recommencer</button>
     <button class="done-btn-outline" onclick="goHome()">🏠 Accueil</button>
   </div>`;
