@@ -472,6 +472,7 @@ function openCtxMenu(i) {
   const ex = exercises[i];
   document.getElementById('ctx-title').textContent = ex.name.toUpperCase();
   document.getElementById('ctx-edit').onclick = () => { closeCtxMenu(); openEdit(i); };
+  document.getElementById('ctx-history').onclick = () => { closeCtxMenu(); openHistoryForEx(i); };
   document.getElementById('ctx-duplicate').onclick = () => { closeCtxMenu(); duplicateExercise(i); };
   document.getElementById('ctx-delete').onclick = () => { closeCtxMenu(); confirmDeleteCtx(i); };
   document.getElementById('ctx-overlay').classList.add('visible');
@@ -480,6 +481,17 @@ function openCtxMenu(i) {
 function closeCtxMenu() {
   document.getElementById('ctx-overlay').classList.remove('visible');
   ctxIdx = -1;
+}
+ 
+function openHistoryForEx(i) {
+  // Temporarily set wEx so openHistory filters by this exercise
+  const savedWEx = wEx;
+  wEx = exercises[i];
+  const title = document.getElementById('hist-title');
+  const list = document.getElementById('history-list');
+  const backBtn = document.getElementById('hist-back');
+  backBtn.onclick = () => { wEx = savedWEx; showScreen('home'); };
+  openHistory();
 }
  
 function duplicateExercise(i) {
@@ -900,7 +912,7 @@ function runCountdown(secs, onDone) {
  
 function launchTimerSerie() {
   const body=document.getElementById('workout-body');
-  if(wEx.countdownEnabled){
+  if(wEx.countdownEnabled && wCurrent===0){
     runCountdown(wEx.countdownSecs, ()=>{ renderTimerMode(body); });
   } else {
     renderTimerMode(body);
@@ -909,7 +921,7 @@ function launchTimerSerie() {
  
 function launchRepsSerie() {
   const body=document.getElementById('workout-body');
-  if(wEx.countdownEnabled){
+  if(wEx.countdownEnabled && wCurrent===0){
     runCountdown(wEx.countdownSecs, ()=>{ renderRepsMode(body); });
   } else {
     renderRepsMode(body);
@@ -1207,27 +1219,74 @@ function showDayDetail(dateKey, sessions) {
   const detail = document.getElementById('cal-day-detail');
   const [y, m, d] = dateKey.split('-');
   const dateLabel = new Date(+y, +m-1, +d).toLocaleDateString('fr-FR', {weekday:'long', day:'numeric', month:'long'});
+  detail.innerHTML = '';
+ 
+  const title = document.createElement('div');
+  title.className = 'cal-detail-title';
+  title.textContent = dateLabel.toUpperCase();
+  detail.appendChild(title);
  
   if (!sessions.length) {
-    detail.innerHTML = `<div class="cal-detail-title">${dateLabel.toUpperCase()}</div><div class="cal-empty">Aucune séance ce jour</div>`;
+    const empty = document.createElement('div');
+    empty.className = 'cal-empty';
+    empty.textContent = 'Aucune séance ce jour';
+    detail.appendChild(empty);
     return;
   }
  
-  let html = `<div class="cal-detail-title">${dateLabel.toUpperCase()}</div>`;
+  const allHistory = JSON.parse(localStorage.getItem('gymflow_history') || '[]');
+ 
   sessions.forEach(s => {
+    const globalIdx = allHistory.indexOf(s);
     const time = new Date(s.date).toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'});
     const sA = s.setsAchieved !== undefined ? s.setsAchieved : s.sets;
     const meta = s.type === 'timer'
       ? `${sA}/${s.sets} séries · ${fmtTime(s.workSecs)} travail`
       : `${sA}/${s.sets} séries${s.reps ? ' × ' + s.reps + ' reps' : ''}`;
-    const weightStr = s.weight ? `<div class="cal-session-weight">⚖️ ${s.weight} kg</div>` : '';
-    html += `<div class="cal-session-card">
+ 
+    const card = document.createElement('div');
+    card.className = 'cal-session-card';
+    card.innerHTML = `
       <div class="cal-session-name">${s.exName}</div>
       <div class="cal-session-meta">${time} · ${meta}</div>
-      ${weightStr}
-    </div>`;
+      ${s.weight ? `<div class="cal-session-weight">⚖️ ${s.weight} kg</div>` : ''}`;
+ 
+    // Long press → confirm delete bar
+    let pt, dlp = false;
+    const startPress = () => { dlp=false; pt=setTimeout(()=>{ dlp=true; showCalDeleteBar(card, globalIdx, dateKey); }, 600); };
+    const endPress = () => clearTimeout(pt);
+    card.addEventListener('touchstart', startPress, {passive:true});
+    card.addEventListener('touchend', endPress);
+    card.addEventListener('touchmove', endPress);
+    card.addEventListener('mousedown', startPress);
+    card.addEventListener('mouseup', endPress);
+ 
+    detail.appendChild(card);
   });
-  detail.innerHTML = html;
+}
+ 
+function showCalDeleteBar(card, globalIdx, dateKey) {
+  if (card.querySelector('.confirm-bar')) return;
+  const bar = document.createElement('div');
+  bar.className = 'confirm-bar';
+  bar.style.marginTop = '8px';
+  bar.innerHTML = `<span>Supprimer ?</span><button class="confirm-yes">Oui</button><button class="confirm-no">Non</button>`;
+  bar.querySelector('.confirm-yes').onclick = () => {
+    const h = JSON.parse(localStorage.getItem('gymflow_history') || '[]');
+    h.splice(globalIdx, 1);
+    localStorage.setItem('gymflow_history', JSON.stringify(h));
+    // Refresh the day view
+    const allHistory = JSON.parse(localStorage.getItem('gymflow_history') || '[]');
+    const [y2, m2, d2] = dateKey.split('-');
+    const daySessions = allHistory.filter(s => {
+      const dd = new Date(s.date);
+      return dd.getFullYear()===+y2 && dd.getMonth()===+m2-1 && dd.getDate()===+d2;
+    });
+    renderCalendar();
+    showDayDetail(dateKey, daySessions);
+  };
+  bar.querySelector('.confirm-no').onclick = () => bar.remove();
+  card.appendChild(bar);
 }
  
 // ===== NAV =====
