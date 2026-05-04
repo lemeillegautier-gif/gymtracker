@@ -182,6 +182,32 @@
   .workout-name { font-family: 'Bebas Neue', sans-serif; font-size: 24px; letter-spacing: 2px; flex: 1; }
   .workout-weight-bar { padding: 0 24px 8px; font-size: 13px; color: var(--accent2); font-weight: 600; }
   .series-progress { display: flex; gap: 6px; padding: 0 24px 16px; flex-wrap: wrap; }
+
+  /* SESSION PROGRESS BAR in workout */
+  .session-bar { display: flex; align-items: center; gap: 6px; padding: 6px 24px 10px; overflow-x: auto; scrollbar-width: none; }
+  .session-bar::-webkit-scrollbar { display: none; }
+  .session-step { display: flex; flex-direction: column; align-items: center; gap: 3px; flex-shrink: 0; }
+  .session-step-dot { width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--border); background: var(--surface); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; color: var(--muted); transition: all 0.2s; }
+  .session-step-dot.done { background: var(--green); border-color: var(--green); color: var(--bg); }
+  .session-step-dot.active { background: var(--accent); border-color: var(--accent); color: var(--bg); }
+  .session-step-label { font-size: 9px; color: var(--muted); max-width: 36px; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .session-step-label.active { color: var(--accent); }
+  .session-step-sep { width: 16px; height: 2px; background: var(--border); border-radius: 1px; margin-bottom: 12px; flex-shrink: 0; }
+
+  /* RESUME BANNER */
+  .resume-banner { background: rgba(232,255,71,0.08); border: 1px solid rgba(232,255,71,0.25); border-radius: 14px; padding: 14px 16px; display: flex; align-items: center; gap: 12px; margin-bottom: 0; cursor: pointer; margin-top: 20px; }
+  .resume-banner-info { flex: 1; }
+  .resume-banner-title { font-family: 'Bebas Neue', sans-serif; font-size: 14px; letter-spacing: 2px; color: var(--accent); }
+  .resume-banner-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .resume-banner-btn { font-family: 'Bebas Neue', sans-serif; font-size: 14px; letter-spacing: 1px; padding: 8px 14px; border-radius: 10px; background: var(--accent); color: var(--bg); border: none; cursor: pointer; flex-shrink: 0; }
+
+  /* NEXT EXERCISE SCREEN */
+  .next-ex-screen { display: flex; flex-direction: column; align-items: center; padding: 24px; flex: 1; gap: 16px; }
+  .next-ex-title { font-family: 'Bebas Neue', sans-serif; font-size: 14px; letter-spacing: 3px; color: var(--muted); }
+  .next-ex-name { font-family: 'Bebas Neue', sans-serif; font-size: 36px; letter-spacing: 2px; color: var(--text); text-align: center; }
+  .next-ex-meta { font-size: 13px; color: var(--muted); text-align: center; }
+  .next-ex-launch { width: 100%; padding: 22px; border-radius: 18px; background: var(--accent); border: none; font-family: 'Bebas Neue', sans-serif; font-size: 26px; letter-spacing: 3px; color: var(--bg); cursor: pointer; margin-top: 8px; }
+  .next-ex-change { width: 100%; padding: 14px; border-radius: 14px; background: transparent; border: 1px solid var(--border); color: var(--muted); font-family: 'DM Sans', sans-serif; font-size: 14px; cursor: pointer; }
   .series-dot { height: 6px; border-radius: 3px; background: var(--border); flex: 1; transition: background 0.3s; min-width: 20px; }
   .series-dot.done { background: var(--green); }
   .series-dot.active { background: repeating-linear-gradient(90deg, var(--accent) 0px, var(--accent) 6px, transparent 6px, transparent 12px); border-radius: 3px; }
@@ -267,6 +293,20 @@
   /* STOP SERIE */
   .stop-serie-btn { padding: 12px 24px; border-radius: 14px; border: 1px solid var(--red); background: transparent; color: var(--red); font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; margin-top: 8px; }
 
+  /* QR BUTTON */
+  .qr-btn { display: flex; flex-direction: column; align-items: center; gap: 3px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px; color: var(--text); cursor: pointer; margin-top: 6px; flex-shrink: 0; }
+  .qr-btn span { font-family: 'Bebas Neue', sans-serif; font-size: 10px; letter-spacing: 1.5px; color: var(--muted); }
+  .qr-btn:active { background: var(--surface2); }
+
+  /* QR OVERLAY */
+  .qr-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 400; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+  .qr-overlay.visible { opacity: 1; pointer-events: all; }
+  .qr-sheet { background: var(--surface); border-radius: 24px; padding: 32px 28px; display: flex; flex-direction: column; align-items: center; gap: 10px; max-width: 320px; width: 90%; }
+  .qr-label { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 4px; color: var(--accent); }
+  .qr-sub { font-size: 13px; color: var(--muted); text-align: center; }
+  .qr-number { font-family: 'Bebas Neue', sans-serif; font-size: 28px; letter-spacing: 6px; color: var(--text); }
+  .qr-close { padding: 12px 32px; border-radius: 12px; border: 1px solid var(--border); background: transparent; color: var(--muted); font-family: 'DM Sans', sans-serif; font-size: 14px; cursor: pointer; margin-top: 8px; }
+
   /* HISTORY */
   #history { padding: 0; }
   .history-list { padding: 20px 24px 60px; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 10px; }
@@ -281,7 +321,25 @@
 
 <!-- HOME -->
 <div id="home" class="screen active">
-  <div class="logo">GYMFLOW <span>TRACKER</span></div>
+  <div style="display:flex;align-items:flex-start;justify-content:space-between">
+    <div class="logo">GYMFLOW <span>TRACKER</span></div>
+    <button class="qr-btn" onclick="openQR()">
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="1" y="1" width="8" height="8" rx="1" stroke="currentColor" stroke-width="1.8" fill="none"/>
+        <rect x="3" y="3" width="4" height="4" fill="currentColor"/>
+        <rect x="13" y="1" width="8" height="8" rx="1" stroke="currentColor" stroke-width="1.8" fill="none"/>
+        <rect x="15" y="3" width="4" height="4" fill="currentColor"/>
+        <rect x="1" y="13" width="8" height="8" rx="1" stroke="currentColor" stroke-width="1.8" fill="none"/>
+        <rect x="3" y="15" width="4" height="4" fill="currentColor"/>
+        <rect x="13" y="13" width="2" height="2" fill="currentColor"/>
+        <rect x="17" y="13" width="2" height="2" fill="currentColor"/>
+        <rect x="13" y="17" width="2" height="2" fill="currentColor"/>
+        <rect x="17" y="17" width="2" height="2" fill="currentColor"/>
+        <rect x="15" y="15" width="2" height="2" fill="currentColor"/>
+      </svg>
+      <span>BADGE</span>
+    </button>
+  </div>
 
   <!-- MA SÉANCE -->
   <div class="section-header" onclick="toggleSection('session')">
@@ -307,7 +365,16 @@
   <button class="fab-cal" onclick="openCalendar()">📅</button>
 </div>
 
-<!-- EXERCISE PICKER -->
+<!-- QR OVERLAY -->
+<div class="qr-overlay" id="qr-overlay" onclick="closeQR()">
+  <div class="qr-sheet" onclick="event.stopPropagation()">
+    <div class="qr-label">MON BADGE</div>
+    <div class="qr-sub">Présente ce code à l'entrée</div>
+    <div id="qr-code-container" style="background:#fff;padding:20px;border-radius:16px;margin:8px 0"></div>
+    <div class="qr-number">3950220</div>
+    <button class="qr-close" onclick="closeQR()">Fermer</button>
+  </div>
+</div>
 <div class="picker-overlay" id="picker-overlay" onclick="closePicker()">
   <div class="picker-sheet" onclick="event.stopPropagation()">
     <div class="picker-title">CHOISIR UN EXERCICE</div>
@@ -424,6 +491,7 @@
     <div class="workout-name" id="workout-name"></div>
     <button class="back-btn" onclick="openHistory()" style="font-size:15px">📋</button>
   </div>
+  <div class="session-bar" id="session-bar" style="display:none"></div>
   <div class="workout-weight-bar" id="workout-weight-bar" style="display:none"></div>
   <div class="series-progress" id="series-progress"></div>
   <div id="workout-body"></div>
@@ -556,6 +624,27 @@ function toggleSection(key) {
 function renderSession() {
   const list = document.getElementById('session-list');
   const launchBtn = document.getElementById('session-launch-btn');
+
+  // Resume banner if session active and we're back on home
+  const resumeId = 'session-resume-banner';
+  const existing = document.getElementById(resumeId);
+  if(existing) existing.remove();
+  if(sessionActive && sessionQueueIdx <= sessionQueue.length) {
+    const remaining = sessionQueue.length - (sessionQueueIdx - 1);
+    const currentEx = exercises[sessionQueue[sessionQueueIdx-1]];
+    const banner = document.createElement('div');
+    banner.id = resumeId;
+    banner.className = 'resume-banner';
+    banner.innerHTML = `
+      <div class="resume-banner-info">
+        <div class="resume-banner-title">⚡ SÉANCE EN COURS</div>
+        <div class="resume-banner-sub">${currentEx?currentEx.name:'—'} · ${remaining} exo${remaining>1?'s':''} restant${remaining>1?'s':''}</div>
+      </div>
+      <button class="resume-banner-btn" onclick="resumeSession()">REPRENDRE</button>`;
+    const sectionHeader = document.querySelector('.section-header');
+    sectionHeader.parentNode.insertBefore(banner, sectionHeader);
+  }
+
   list.innerHTML = '';
   if (!sessionExercises.length) {
     list.innerHTML = `<div class="session-empty">Aucun exercice dans la séance.<br>Appuie sur + pour en ajouter.</div>`;
@@ -629,38 +718,102 @@ function removeFromSession(pos) {
 }
 
 // SESSION LAUNCHER
-let sessionQueue = [], sessionQueueIdx = 0;
+let sessionQueue = [], sessionQueueIdx = 0, sessionActive = false;
+
 function launchSession() {
   if(!sessionExercises.length) return;
   sessionQueue = [...sessionExercises];
   sessionQueueIdx = 0;
+  sessionActive = true;
   launchNextInSession();
 }
 
 function launchNextInSession() {
-  if(sessionQueueIdx >= sessionQueue.length) { goHome(); return; }
+  if(sessionQueueIdx >= sessionQueue.length) {
+    sessionActive = false;
+    sessionQueue = [];
+    sessionQueueIdx = 0;
+    goHome();
+    return;
+  }
   const exIdx = sessionQueue[sessionQueueIdx];
   sessionQueueIdx++;
-  startWorkoutSession(exIdx, sessionQueueIdx < sessionQueue.length);
+  startWorkoutSession(exIdx);
 }
 
-function startWorkoutSession(i, hasNext) {
+function startWorkoutSession(i) {
   if(i<0||i>=exercises.length){launchNextInSession();return;}
   wEx=exercises[i]; wExIdx=i; wCurrent=0; wDone=false; wPartialSeries=null; clearTimers();
   document.getElementById('workout-name').textContent=wEx.name;
+
+  // Weight + time bar
   const wb=document.getElementById('workout-weight-bar');
-  if(wEx.weightEnabled){wb.style.display='block';wb.textContent='⚖️ '+wEx.weight+' kg';}else{wb.style.display='none';}
-  const ww=document.getElementById('workout-weight-bar');
-  if(wEx.weightEnabled){const work=wEx.sets*wEx.workSecs;const pause=wEx.pauseEnabled?(wEx.sets-1)*wEx.pauseSecs:0;ww.textContent=(wEx.weightEnabled?'⚖️ '+wEx.weight+' kg   ':'')+(wEx.type==='timer'?'⏱ '+fmtTime(work+pause):'');}
+  let wbParts=[];
+  if(wEx.weightEnabled) wbParts.push('⚖️ '+wEx.weight+' kg');
+  if(wEx.type==='timer'){const work=wEx.sets*wEx.workSecs;const pause=wEx.pauseEnabled?(wEx.sets-1)*wEx.pauseSecs:0;wbParts.push('⏱ '+fmtTime(work+pause));}
+  if(wbParts.length){wb.style.display='block';wb.textContent=wbParts.join('   ');}else{wb.style.display='none';}
+
+  renderSessionBar();
   renderSeriesProgress();
-  // Override done screen to go to next exercise
-  wSessionHasNext = hasNext;
   renderWorkoutBody();
   showScreen('workout');
 }
+
+function renderSessionBar() {
+  const bar = document.getElementById('session-bar');
+  if(!sessionActive || sessionQueue.length <= 1) { bar.style.display='none'; return; }
+  bar.style.display='flex';
+  bar.innerHTML='';
+  sessionQueue.forEach((exIdx, pos) => {
+    const ex = exercises[exIdx];
+    if (!ex) return;
+    const isDone = pos < sessionQueueIdx - 1;
+    const isActive = pos === sessionQueueIdx - 1;
+    const dot = document.createElement('div');
+    dot.className = 'session-step';
+    dot.innerHTML = `
+      <div class="session-step-dot ${isDone?'done':isActive?'active':''}">${isDone?'✓':pos+1}</div>
+      <div class="session-step-label ${isActive?'active':''}">${ex.name.slice(0,6)}</div>`;
+    bar.appendChild(dot);
+    if(pos < sessionQueue.length-1) {
+      const sep = document.createElement('div');
+      sep.className='session-step-sep';
+      bar.appendChild(sep);
+    }
+  });
+}
+
 let wSessionHasNext = false;
 
-// ===== EXERCISE PICKER =====
+function showChangeNextEx() {
+  // Show a picker to swap the next exercise
+  const body = document.getElementById('workout-body');
+  let html = `<div style="padding:24px;flex:1;overflow-y:auto">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:3px;color:var(--muted);margin-bottom:16px">CHOISIR L'EXERCICE SUIVANT</div>
+    <div style="display:flex;flex-direction:column;gap:8px">`;
+  exercises.forEach((ex, i) => {
+    html += `<div onclick="swapNextEx(${i})" style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;cursor:pointer">
+      <div style="font-weight:600;font-size:14px">${ex.name}${ex.weightEnabled?' — '+ex.weight+' kg':''}</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:3px">${exMeta(ex)}</div>
+    </div>`;
+  });
+  html += `</div>
+    <button onclick="renderWorkoutBody()" style="width:100%;margin-top:16px;padding:14px;border-radius:14px;border:1px solid var(--border);background:transparent;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:14px;cursor:pointer">Annuler</button>
+  </div>`;
+  body.innerHTML = html;
+}
+
+function swapNextEx(exIdx) {
+  if(sessionQueueIdx < sessionQueue.length) sessionQueue[sessionQueueIdx] = exIdx;
+  renderWorkoutBody();
+}
+
+
+function resumeSession() {
+  const exIdx = sessionQueue[sessionQueueIdx - 1];
+  startWorkoutSession(exIdx);
+}
+
 function openPicker() {
   pickerSelected = new Set();
   renderPicker();
@@ -1030,10 +1183,27 @@ function renderWorkoutBody() {
   const body=document.getElementById('workout-body');
   if(wDone){
     saveHistory(wEx.sets);
-    const nextBtn = wSessionHasNext
-      ? `<button class="done-btn" onclick="launchNextInSession()">▶ Exercice suivant</button>`
-      : `<button class="done-btn" onclick="restartWorkout()">🔁 Recommencer</button>`;
-    body.innerHTML=`<div class="done-screen"><div class="done-emoji">🏆</div><div class="done-title">TERMINÉ !</div><div class="done-sub">${wEx.sets} séries de ${wEx.name} complétées. Bravo !</div>${nextBtn}<button class="done-btn-outline" onclick="goHome()">🏠 Accueil</button></div>`;
+    const hasNext = sessionActive && sessionQueueIdx < sessionQueue.length;
+    let nextBlock = '';
+    if(hasNext) {
+      const nextEx = exercises[sessionQueue[sessionQueueIdx]];
+      nextBlock = `
+        <div style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;text-align:left">
+          <div class="next-ex-title" style="margin-bottom:6px">EXERCICE SUIVANT</div>
+          <div class="next-ex-name" style="font-size:22px;text-align:left">${nextEx?nextEx.name:'—'}</div>
+          <div class="next-ex-meta">${nextEx?exMeta(nextEx):''}</div>
+        </div>
+        <button class="next-ex-launch" onclick="launchNextInSession()">▶ LANCER</button>
+        <button class="next-ex-change" onclick="showChangeNextEx()">↔ Changer l'exercice suivant</button>`;
+    }
+    body.innerHTML=`<div class="done-screen">
+      <div class="done-emoji">🏆</div>
+      <div class="done-title">SÉRIE FINIE !</div>
+      <div class="done-sub">${wEx.sets} séries de ${wEx.name} complétées.</div>
+      ${nextBlock}
+      ${!hasNext?`<button class="done-btn" onclick="restartWorkout()">🔁 Recommencer</button>`:''}
+      <button class="done-btn-outline" onclick="goHome()">🏠 Accueil</button>
+    </div>`;
     return;
   }
   if(wEx.type==='timer') launchTimerSerie(); else launchRepsSerie();
@@ -1521,6 +1691,38 @@ function showCalDeleteBar(card, globalIdx, dateKey) {
 }
 
 // ===== NAV =====
+function openQR() {
+  document.getElementById('qr-overlay').classList.add('visible');
+  const container = document.getElementById('qr-code-container');
+  if (container.innerHTML) return; // already generated
+  // Load qrcode lib on demand
+  if (typeof QRCode === 'undefined') {
+    const script = document.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';
+    script.onload = () => generateQR();
+    document.head.appendChild(script);
+  } else {
+    generateQR();
+  }
+}
+
+function generateQR() {
+  const container = document.getElementById('qr-code-container');
+  container.innerHTML = '';
+  new QRCode(container, {
+    text: '3950220',
+    width: 220,
+    height: 220,
+    colorDark: '#000000',
+    colorLight: '#ffffff',
+    correctLevel: QRCode.CorrectLevel.H
+  });
+}
+
+function closeQR() {
+  document.getElementById('qr-overlay').classList.remove('visible');
+}
+
 function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');}
 function goHome(){clearTimers();renderHome();renderSession();showScreen('home');}
 function clearTimers(){clearInterval(timerInterval);clearInterval(pauseInterval);clearInterval(cdInterval);timerRunning=false;document.getElementById('countdown-overlay').classList.remove('visible');}
